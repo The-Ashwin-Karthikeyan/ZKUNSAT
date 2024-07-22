@@ -303,17 +303,26 @@ typedef  vector<int64_t> CLS;
 typedef vector<int64_t> SPT;
 typedef vector<int64_t> PVT;
 
+inline void read_lrup_proof(string filename, int& d, vector<CLS>& clauses, vector<SPT>& supports, vector<PVT>& pivots, int& ncls, int& nres);
+
 inline void readproof(string filename, int& d, vector<CLS>& clauses, vector<SPT>& supports, vector<PVT>& pivots, int& ncls, int& nres){
     std::ifstream file(filename);
     std::string str;
     ncls = 0;
     nres = 0;
     d = 0;
+    bool lrup_flag = true;
 
     while (std::getline(file, str)) {
         istringstream ss(str);
         string word;
         while (ss >> word) {
+            if (lrup_flag) {
+                if (word == "index:")
+                    lrup_flag = false;
+                else 
+                    read_lrup_proof(filename, d, clauses, supports, pivots, ncls, nres);
+            }
             if (word == "clause:") {
                 int nltr  = 0;
                 CLS clause;
@@ -408,6 +417,75 @@ inline void sort_vector_of_clauses(vector<CLS>& clauses) {
         sort_clause(clause);
     }
     std::sort(clauses.begin(), clauses.end());
+}
+
+inline void read_lrup_proof(string filename, int& d, vector<CLS>& clauses, vector<SPT>& supports, vector<PVT>& pivots, int& ncls, int& nres) {
+    //This is just copy pasted from the readproof() function. 
+    //TODO: Rewrite this function so that it accepts a lrup proof. Figure out 
+    //what the degree has to be in this case. Also figure out how exactly to 
+    //make this work for the verification part of it.
+    std::ifstream file(filename);
+    std::string str;
+    ncls = 0;
+    nres = 0;
+    d = 0;
+    bool lrup_flag = true;
+
+    while (std::getline(file, str)) {
+        istringstream ss(str);
+        string word;
+        while (ss >> word) {
+            if (lrup_flag) {
+                if (word == "index:")
+                    lrup_flag = false;
+                else 
+                    read_lrup_proof(filename, d, clauses, supports, pivots, ncls, nres);
+            }
+            if (word == "clause:") {
+                int nltr  = 0;
+                CLS clause;
+                ss >> word;
+                while (word != "support:") {
+                    int i = stoi(word);
+                    clause.push_back(i);
+                    nltr = nltr + 1;
+                    ss >> word;
+                }
+                if (d < nltr) d = nltr;
+                clauses.push_back(clause);
+                ncls ++ ;
+            }
+            if (word == "support:") {
+                SPT support;
+                ss >> word;
+                while (word != "pivot:") {
+                    int i = stoi(word);
+                    support.push_back(i);
+                    ss >> word;
+                }
+                supports.push_back(support);
+            }
+            if (word == "pivot:") {
+                SPT pchain;
+                ss >> word;
+                while (word != "end:") {
+                    int i = stoi(word);
+                    pchain.push_back(wrap(i));
+                    ss >> word;
+//                    nres = nres + 1;
+                }
+                if (pchain.size() > 0){
+                    nres = nres + 1;
+                }
+                pivots.push_back(pchain);
+
+            }
+            if (word == "DEGREE:"){
+                ss >> word;
+                d = stoi(word);
+            }
+        }
+    }
 }
 
 #endif //ZKUNSAT_NEW_UTILS_H
