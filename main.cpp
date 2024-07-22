@@ -19,8 +19,9 @@ int main(int argc, char **argv) {
     parse_party_and_port(argv, &party, &port);
     BoolIO <NetIO> *ios[threads];
     for (int i = 0; i < threads; ++i)
-        ios[i] = new BoolIO<NetIO>(new NetIO(party == ALICE ? nullptr : argv[3], port + i), party == ALICE);       
-    char *prooffile = argv[4];
+        ios[i] = new BoolIO<NetIO>(new NetIO(party == ALICE ? nullptr : argv[3], port + i), party == ALICE);
+    char *input_formula = argv[4];       
+    char *prooffile = argv[5];
 
     setup_zk_bool < BoolIO < NetIO >> (ios, threads, party);
     ZKBoolCircExec <BoolIO<NetIO>> *exec = (ZKBoolCircExec < BoolIO < NetIO >> *)(CircuitExecution::circ_exec);
@@ -55,21 +56,45 @@ int main(int argc, char **argv) {
     vector <SPT> supports;
     vector <SPT> pivots;
 
+    vector <CLS> input_clauses;
+    int input_size;
 
     if (party == ALICE) {
+        read_input_formula(string(input_formula), input_clauses, ncls);
+        input_size = sizeof(input_clauses);
+        //TODO: find out a way to use fix the readproof to work with the current setup. 
+        //Special attention to the ncls verification part of the problem
         readproof(string(prooffile), DEGREE, clauses, supports, pivots, ncls, nres);
         cout << string(prooffile) << endl;
         cout << "----input proof----" << endl;
         io->send_data(&nres, 4);
         io->send_data(&ncls, 4);
         io->send_data(&DEGREE, 4);
-
+        //TODO: This conversion part of the problem is going to be fairly straightforward to solve:
+        //Just send and recieve each integer (after sorting each clause and the set of clauses) with a 0 to represent new clause and then verify the equality
+        sort_vector_of_clauses(input_clauses);
+        for (auto clause: input_clauses) {
+            for (auto literal: clause) {
+                io->send_data(&literal, 4);
+            }
+        }
     }
 
     if (party == BOB) {
+        int temp_ncls = 0;
+        read_input_formula(string(input_formula), input_clauses, temp_ncls);
         io->recv_data(&nres, 4);
         io->recv_data(&ncls, 4);
         io->recv_data(&DEGREE, 4);
+        sort_vector_of_clauses(input_clauses);
+        int temp_literal;
+        for (auto clause: input_clauses) {
+            for (auto literal: clause) {
+                io->recv_data(&temp_literal, 4);
+                if (temp_literal != literal)
+                    error("input formul mismatch!\n");
+            }
+        }
 
         clauses = vector<CLS>(ncls);
         supports = vector<SPT>(ncls);

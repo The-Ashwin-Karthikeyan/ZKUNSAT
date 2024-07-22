@@ -361,4 +361,53 @@ inline void readproof(string filename, int& d, vector<CLS>& clauses, vector<SPT>
     }
 }
 
+inline void read_input_formula(string filename, vector<CLS>& clauses, int& temp_ncls) {
+    std::ifstream file(filename);
+    std::string str;
+    temp_ncls = 0;
+
+    int iter_num = 0;
+    while (std::getline(file, str)) {
+        istringstream ss(str);
+        string word;
+        CLS clause;
+        while (ss >> word) {
+            // Reads the first line of DIMACS file for input formula
+            if (iter_num == 0) {
+                if (word == "p")
+                    ss >> word;
+                else 
+                    cout<<"Input formula file not in DIMACS format";
+                if (word == "cnf")
+                    ss >> word;
+                else 
+                    cout<<"Input formula file not in DIMACS format";
+                ss >> word;
+                temp_ncls = stoi(word);
+            iter_num = 1;
+            }
+            // This indicates the end of a clause
+            if (stoi(word) == 0) {
+                clauses.push_back(clause);
+                continue;
+            }
+            else {
+                int i = stoi(word);
+                clause.push_back(i);
+            }
+        }
+    }
+}
+
+inline void sort_clause(CLS& clause) {
+    std::sort(clause.begin(), clause.end());
+}
+
+inline void sort_vector_of_clauses(vector<CLS>& clauses) {
+    for(auto& clause : clauses) {
+        sort_clause(clause);
+    }
+    std::sort(clauses.begin(), clauses.end());
+}
+
 #endif //ZKUNSAT_NEW_UTILS_H
