@@ -70,8 +70,7 @@ int main(int argc, char **argv) {
         io->send_data(&nres, 4);
         io->send_data(&ncls, 4);
         io->send_data(&DEGREE, 4);
-        //TODO: This conversion part of the problem is going to be fairly straightforward to solve:
-        //Just send and recieve each integer (after sorting each clause and the set of clauses) with a 0 to represent new clause and then verify the equality
+        //Check the equality of the input clauses (prover version's equality to the verifier version)
         sort_vector_of_clauses(input_clauses);
         for (auto clause: input_clauses) {
             for (auto literal: clause) {
