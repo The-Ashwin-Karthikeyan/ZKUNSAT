@@ -398,6 +398,7 @@ inline void read_input_formula(string filename, vector<CLS>& clauses, int& temp_
             // This indicates the end of a clause
             if (stoi(word) == 0) {
                 clauses.push_back(clause);
+                temp_ncls++;
                 continue;
             }
             else {
@@ -426,64 +427,31 @@ inline void read_lrup_proof(string filename, int& d, vector<CLS>& clauses, vecto
     //make this work for the verification part of it.
     std::ifstream file(filename);
     std::string str;
-    ncls = 0;
     nres = 0;
     d = 0;
+    int index = 0;
     bool lrup_flag = true;
 
     while (std::getline(file, str)) {
         istringstream ss(str);
         string word;
         while (ss >> word) {
-            if (lrup_flag) {
-                if (word == "index:")
-                    lrup_flag = false;
-                else 
-                    read_lrup_proof(filename, d, clauses, supports, pivots, ncls, nres);
-            }
-            if (word == "clause:") {
-                int nltr  = 0;
-                CLS clause;
+            CLS clause;
+            SPT hint;
+            index = stoi(word);
+            ss >> word;
+            while (word != "0") {
+                clause.push_back(stoi(word));
                 ss >> word;
-                while (word != "support:") {
-                    int i = stoi(word);
-                    clause.push_back(i);
-                    nltr = nltr + 1;
-                    ss >> word;
-                }
-                if (d < nltr) d = nltr;
-                clauses.push_back(clause);
-                ncls ++ ;
             }
-            if (word == "support:") {
-                SPT support;
-                ss >> word;
-                while (word != "pivot:") {
-                    int i = stoi(word);
-                    support.push_back(i);
-                    ss >> word;
-                }
-                supports.push_back(support);
+            ss >> word;
+            while (word != "0") {
+                hint.push_back(stoi(word));
             }
-            if (word == "pivot:") {
-                SPT pchain;
-                ss >> word;
-                while (word != "end:") {
-                    int i = stoi(word);
-                    pchain.push_back(wrap(i));
-                    ss >> word;
-//                    nres = nres + 1;
-                }
-                if (pchain.size() > 0){
-                    nres = nres + 1;
-                }
-                pivots.push_back(pchain);
-
-            }
-            if (word == "DEGREE:"){
-                ss >> word;
-                d = stoi(word);
-            }
+            clauses.push_back(clause);
+            supports.push_back(hint);
+            nres++;
+            ncls++;
         }
     }
 }
