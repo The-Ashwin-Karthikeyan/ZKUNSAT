@@ -58,13 +58,14 @@ int main(int argc, char **argv) {
 
     vector <CLS> input_clauses;
     int input_size;
+    bool is_lrup;
 
     if (party == ALICE) {
         read_input_formula(string(input_formula), input_clauses, ncls);
         input_size = sizeof(input_clauses);
         //TODO: find out a way to use fix the readproof to work with the current setup. 
         //Special attention to the ncls verification part of the problem
-        readproof(string(prooffile), DEGREE, clauses, supports, pivots, ncls, nres);
+        readproof(string(prooffile), DEGREE, clauses, supports, pivots, ncls, nres, is_lrup);
         cout << string(prooffile) << endl;
         cout << "----input proof----" << endl;
         io->send_data(&nres, 4);
@@ -207,9 +208,16 @@ int main(int argc, char **argv) {
         }
 
         bool last_clause = (i == (ncls - 1));
-        auto cost = check_chain(chain, pvt, i, formula, last_clause);
-        cost_resolve = cost_resolve + cost.second;
-        cost_access = cost_access + cost.first;
+        if (is_lrup){
+            auto cost = check_lrup_chain(chain, pvt, i, formula, last_clause);
+            cost_resolve = cost_resolve + cost.second;
+            cost_access = cost_access + cost.first;
+        }   
+        else {
+            auto cost = check_chain(chain, pvt, i, formula, last_clause);
+            cost_resolve = cost_resolve + cost.second;
+            cost_access = cost_access + cost.first;
+        }
     }
 
     check_zero_MAC(zero_block, 1);

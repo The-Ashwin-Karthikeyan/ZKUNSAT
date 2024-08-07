@@ -391,6 +391,32 @@ inline pair<double, double> check_chain(vector<Integer>& indice, vector<uint64_t
 
 }
 
+inline pair<double, double> check_lrup_chain(vector<Integer>& indice, vector<uint64_t> pivots, int ptr, clauseRAM<BoolIO<NetIO>>* formula, bool last_clause) {
+    double cost_resolve = 0;
+    double cost_access = 0;
+    auto timer_0 = chrono::high_resolution_clock::now();
+
+    vector<clause> intermediate;
+    vector<clause> resource;
+    for (Integer index : indice){
+        if (index.geq(Integer(INDEX_SZ, ptr, PUBLIC)).reveal())  error("cheat!");
+        resource.push_back(formula->get(index));
+    }
+
+    auto timer_1 = chrono::high_resolution_clock::now();
+
+    cost_access = chrono::duration<double>(timer_1 - timer_0).count();
+
+
+    auto timer_2 = chrono::high_resolution_clock::now();
+
+    //TODO
+
+    auto timer_3 = chrono::high_resolution_clock::now();
+    cost_resolve = chrono::duration<double>(timer_3 - timer_2).count();
+    return pair<double, double>{cost_access, cost_resolve};
+}
+
 /**************************checking*************************************************/
 
 /**************************bottleneck*************************************************/

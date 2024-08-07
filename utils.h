@@ -305,23 +305,24 @@ typedef vector<int64_t> PVT;
 
 inline void read_lrup_proof(string filename, int& d, vector<CLS>& clauses, vector<SPT>& supports, vector<PVT>& pivots, int& ncls, int& nres);
 
-inline void readproof(string filename, int& d, vector<CLS>& clauses, vector<SPT>& supports, vector<PVT>& pivots, int& ncls, int& nres){
+inline void readproof(string filename, int& d, vector<CLS>& clauses, vector<SPT>& supports, vector<PVT>& pivots, int& ncls, int& nres, bool& is_lrup){
     std::ifstream file(filename);
     std::string str;
     ncls = 0;
     nres = 0;
     d = 0;
-    bool lrup_flag = true;
+    is_lrup = true;
 
     while (std::getline(file, str)) {
         istringstream ss(str);
         string word;
         while (ss >> word) {
-            if (lrup_flag) {
+            if (is_lrup) {
                 if (word == "index:")
-                    lrup_flag = false;
+                    is_lrup = false;
                 else 
                     read_lrup_proof(filename, d, clauses, supports, pivots, ncls, nres);
+                    return;
             }
             if (word == "clause:") {
                 int nltr  = 0;
@@ -430,7 +431,6 @@ inline void read_lrup_proof(string filename, int& d, vector<CLS>& clauses, vecto
     nres = 0;
     d = 0;
     int index = 0;
-    bool lrup_flag = true;
 
     while (std::getline(file, str)) {
         istringstream ss(str);
