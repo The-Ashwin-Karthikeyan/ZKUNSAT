@@ -116,8 +116,8 @@ inline clause get_res_f2k(const clause& a,  const clause& b, uint64_t pivot){
         cout << endl;
         cout <<"overflow error!" << endl;
     }
-    padding(res_raw);
-    assert(res_raw.size() == DEGREE);
+    //padding(res_raw); no-padding
+    //assert(res_raw.size() == DEGREE); no-padding
     clause c(res_raw);
     return c;
 }

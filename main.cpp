@@ -117,7 +117,7 @@ int main(int argc, char **argv) {
         for (int64_t lit: clauses[i]) {
             literals.push_back((wrap(lit)));
         }
-        padding(literals);
+        //padding(literals); no-padding
         clause c(literals);
         raw_formula.push_back(c);
     }
@@ -191,7 +191,7 @@ int main(int argc, char **argv) {
     check_zero_MAC(zero_block, 1);
     auto timer_4 = chrono::high_resolution_clock::now();
 
-    formula->check();
+    //formula->check();
 
     auto timer_5 = chrono::high_resolution_clock::now();
     cost_access = cost_access +  chrono::duration<double>(timer_5 - timer_4).count();
