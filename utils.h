@@ -303,7 +303,8 @@ typedef  vector<int64_t> CLS;
 typedef vector<int64_t> SPT;
 typedef vector<int64_t> PVT;
 
-inline void readproof(string filename, int& d, vector<CLS>& clauses, vector<SPT>& supports, vector<PVT>& pivots, int& ncls, int& nres){
+inline void readproof(string filename, int& d, vector<CLS>& clauses, vector<SPT>& supports, vector<PVT>& pivots, int& ncls, int& nres, vector<vector<int>> degs_and_indices){
+    //TODO: Complete degs_and_indices deduction. Use the bucket sort idea from Arijit.
     std::ifstream file(filename);
     std::string str;
     ncls = 0;
@@ -311,6 +312,7 @@ inline void readproof(string filename, int& d, vector<CLS>& clauses, vector<SPT>
     d = 0;
 
     while (std::getline(file, str)) {
+        vector<int> degree_and_index;
         istringstream ss(str);
         string word;
         while (ss >> word) {
@@ -325,6 +327,9 @@ inline void readproof(string filename, int& d, vector<CLS>& clauses, vector<SPT>
                     ss >> word;
                 }
                 if (d < nltr) d = nltr;
+                degree_and_index.push_back(nltr);
+                degree_and_index.push_back(ncls);
+                degs_and_indices.push_back(degree_and_index);
                 clauses.push_back(clause);
                 ncls ++ ;
             }
@@ -359,6 +364,7 @@ inline void readproof(string filename, int& d, vector<CLS>& clauses, vector<SPT>
             }
         }
     }
+
 }
 
 #endif //ZKUNSAT_NEW_UTILS_H

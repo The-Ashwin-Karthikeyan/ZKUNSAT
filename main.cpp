@@ -6,6 +6,7 @@
 int port, party;
 const int threads = 8;
 int DEGREE = 4;
+vector<vector<int>> degs_and_indices; 
 block *mac, *data;
 uint64_t data_mac_pointer;
 SVoleF2k <BoolIO<NetIO>> *svole;
@@ -57,7 +58,7 @@ int main(int argc, char **argv) {
 
 
     if (party == ALICE) {
-        readproof(string(prooffile), DEGREE, clauses, supports, pivots, ncls, nres);
+        readproof(string(prooffile), DEGREE, clauses, supports, pivots, ncls, nres, degs_and_indices);
         cout << string(prooffile) << endl;
         cout << "----input proof----" << endl;
         io->send_data(&nres, 4);
