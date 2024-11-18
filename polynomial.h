@@ -11,10 +11,11 @@ class polynomial {
 public:
     vector <block> coefficient;
     vector <block> mcoefficient;
+    int deg;
     polynomial(){
     }
-    polynomial(vector<block> coefficient);
-    polynomial(vector<uint64_t> roots);
+    polynomial(vector<block> coefficient, int deg);
+    polynomial(vector<uint64_t> roots, int deg);
     void Evaluate(block &res, block &mres, block &input) const ;
     void Equal(const polynomial& lfh) const;
     void InnerProductEqual(vector<polynomial>& p1, vector<polynomial>& p2);
@@ -31,9 +32,9 @@ public:
 inline void GF2EX2polynomial(GF2EX& a, polynomial& b){
 
     long d = deg(a);
-    assert(!(d > DEGREE));
+    assert(!(d > b.deg));
     std::vector<block> coeff;
-    for (long i = 0; i < DEGREE; i ++){
+    for (long i = 0; i < b.deg; i ++){
         GF2E c = NTL::coeff(a, i);
         GF2X raw = c._GF2E__rep;
         block tmp = zero_block;
@@ -43,7 +44,7 @@ inline void GF2EX2polynomial(GF2EX& a, polynomial& b){
         }
         coeff.push_back(tmp);
     }
-    b = polynomial(coeff);
+    b = polynomial(coeff, b.deg);
 }
 
 

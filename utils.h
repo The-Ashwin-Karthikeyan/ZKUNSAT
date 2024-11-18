@@ -223,8 +223,8 @@ inline void check_zero_MAC(block MAC, int end = 0) {
  * padding a vector of int64 to the size of degree
  * used when prover input a clause
  */
-inline void padding(vector<uint64_t>& input){
-    for (int i = input.size() ; i < DEGREE; i ++){
+inline void padding(vector<uint64_t>& input, int deg){
+    for (int i = input.size() ; i < deg; i ++){
         input.push_back(0UL);
     }
 }
@@ -303,8 +303,7 @@ typedef  vector<int64_t> CLS;
 typedef vector<int64_t> SPT;
 typedef vector<int64_t> PVT;
 
-inline void readproof(string filename, int& d, vector<CLS>& clauses, vector<SPT>& supports, vector<PVT>& pivots, int& ncls, int& nres, vector<vector<int>> degs_and_indices){
-    //TODO: Complete degs_and_indices deduction. Use the bucket sort idea from Arijit.
+inline void readproof(string filename, int& d, vector<CLS>& clauses, vector<SPT>& supports, vector<PVT>& pivots, int& ncls, int& nres, vector<int>& degs, vector<int>& indices){
     std::ifstream file(filename);
     std::string str;
     ncls = 0;
@@ -312,10 +311,25 @@ inline void readproof(string filename, int& d, vector<CLS>& clauses, vector<SPT>
     d = 0;
 
     while (std::getline(file, str)) {
-        vector<int> degree_and_index;
         istringstream ss(str);
         string word;
         while (ss >> word) {
+            if (word == "deg:") {
+                ss >> word;
+                while (word != "index:") {
+                    int deg = stoi(word);
+                    degs.push_back(deg);
+                    ss >> word;
+                }
+            }
+            if (word == "index:") {
+                ss >> word;
+                while (word != "clause:") {
+                    int ind = stoi(word);
+                    indices.push_back(ind);
+                    ss >> word;
+                }
+            }
             if (word == "clause:") {
                 int nltr  = 0;
                 CLS clause;
@@ -327,9 +341,6 @@ inline void readproof(string filename, int& d, vector<CLS>& clauses, vector<SPT>
                     ss >> word;
                 }
                 if (d < nltr) d = nltr;
-                degree_and_index.push_back(nltr);
-                degree_and_index.push_back(ncls);
-                degs_and_indices.push_back(degree_and_index);
                 clauses.push_back(clause);
                 ncls ++ ;
             }

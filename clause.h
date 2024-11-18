@@ -21,9 +21,9 @@ public:
     }
 
 
-    clause(vector<uint64_t> & ells){
-        assert(!(ells.size() > DEGREE));
-        this->poly = polynomial(ells);
+    clause(vector<uint64_t> & ells, int deg){
+        assert(!(ells.size() > deg));
+        this->poly = polynomial(ells, deg);
         this->literals = ells;
     }
 
@@ -75,9 +75,9 @@ inline void check_xres(clause& c0, clause& c1, clause cres, uint64_t pivot){
     vector<uint64_t> pivot_v{pivot};
     vector<uint64_t> neg_pivot_v{get_negate(pivot)};
 
-    polynomial zero_p = polynomial(zero_coeff);
-    polynomial pivot_polynomial(pivot_v);
-    polynomial pivot_neg_polynomial(neg_pivot_v);
+    polynomial zero_p = polynomial(zero_coeff, cres.poly.deg);
+    polynomial pivot_polynomial(pivot_v, 1);
+    polynomial pivot_neg_polynomial(neg_pivot_v, 1);
     vector<polynomial> c0_res {c0.poly, cres.poly };
     vector<polynomial> c1_res {c1.poly, cres.poly };
     vector<polynomial> witness_pivot{witness[0], pivot_polynomial};
@@ -88,39 +88,39 @@ inline void check_xres(clause& c0, clause& c1, clause cres, uint64_t pivot){
 }
 
 
-inline clause get_res_f2k(const clause& a,  const clause& b, uint64_t pivot){
-    uint64_t  npivot  = get_negate(pivot);
+// inline clause get_res_f2k(const clause& a,  const clause& b, uint64_t pivot){
+//     uint64_t  npivot  = get_negate(pivot);
 
-    std::vector<uint64_t> altr = a.literals;
-    std::vector<uint64_t> bltr = b.literals;
-    vector<uint64_t> res_raw;
-    std::set<uint64_t> res_l;
+//     std::vector<uint64_t> altr = a.literals;
+//     std::vector<uint64_t> bltr = b.literals;
+//     vector<uint64_t> res_raw;
+//     std::set<uint64_t> res_l;
 
-    for (auto e: altr) {
-        if (e == pivot or e == 0) continue;
-            res_l.insert(e);
-    }
+//     for (auto e: altr) {
+//         if (e == pivot or e == 0) continue;
+//             res_l.insert(e);
+//     }
 
-    for (auto e: bltr) {
-        if (e == npivot or e == 0) continue;
-        res_l.insert(e);
-    }
+//     for (auto e: bltr) {
+//         if (e == npivot or e == 0) continue;
+//         res_l.insert(e);
+//     }
 
-    for (auto l: res_l) {
-        res_raw.push_back(l);
-    }
+//     for (auto l: res_l) {
+//         res_raw.push_back(l);
+//     }
 
-    if (res_raw.size() > DEGREE) {
-        cout << res_raw.size() << endl;
-        for (auto i : res_raw) cout << i << " ";
-        cout << endl;
-        cout <<"overflow error!" << endl;
-    }
-    padding(res_raw);
-    assert(res_raw.size() == DEGREE);
-    clause c(res_raw);
-    return c;
-}
+//     if (res_raw.size() > DEGREE) {
+//         cout << res_raw.size() << endl;
+//         for (auto i : res_raw) cout << i << " ";
+//         cout << endl;
+//         cout <<"overflow error!" << endl;
+//     }
+//     padding(res_raw);
+//     assert(res_raw.size() == DEGREE);
+//     clause c(res_raw);
+//     return c;
+// }
 
 
 

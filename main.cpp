@@ -4,9 +4,12 @@
 #include "commons.h"
 
 int port, party;
-const int threads = 8;
+const int threads = 1;
 int DEGREE = 4;
-vector<vector<int>> degs_and_indices; 
+vector<int> degs; 
+vector<int> indices;
+vector<int> ClauseRAM_sizes;
+int num_ClauseRAMs;
 block *mac, *data;
 uint64_t data_mac_pointer;
 SVoleF2k <BoolIO<NetIO>> *svole;
@@ -21,7 +24,8 @@ int main(int argc, char **argv) {
     BoolIO <NetIO> *ios[threads];
     for (int i = 0; i < threads; ++i)
         ios[i] = new BoolIO<NetIO>(new NetIO(party == ALICE ? nullptr : argv[3], port + i), party == ALICE);       
-    char *prooffile = argv[4];
+    int num_ClauseRAMs = stoi(argv[4]);
+    char *prooffile = argv[5];
 
     setup_zk_bool < BoolIO < NetIO >> (ios, threads, party);
     ZKBoolCircExec <BoolIO<NetIO>> *exec = (ZKBoolCircExec < BoolIO < NetIO >> *)(CircuitExecution::circ_exec);
@@ -57,13 +61,27 @@ int main(int argc, char **argv) {
     vector <SPT> pivots;
 
 
+    int sum = 0;
     if (party == ALICE) {
-        readproof(string(prooffile), DEGREE, clauses, supports, pivots, ncls, nres, degs_and_indices);
+        readproof(string(prooffile), DEGREE, clauses, supports, pivots, ncls, nres, degs, indices);
         cout << string(prooffile) << endl;
         cout << "----input proof----" << endl;
+
+        // This is as per the calculations in logical sorting the proof file.
+        double batch_size = static_cast<double> (ncls)/num_ClauseRAMs;
+        for (int i = 1; i < num_ClauseRAMs + 1; i++) {
+            ClauseRAM_sizes.push_back(std::floor(batch_size*i) - std::floor(batch_size*(i-1)));
+        }
+
         io->send_data(&nres, 4);
         io->send_data(&ncls, 4);
         io->send_data(&DEGREE, 4);
+        io->send_data(&num_ClauseRAMs, 4);
+        for (int i = 0; i < num_ClauseRAMs; i++) {
+            sum += ClauseRAM_sizes[i];
+            io->send_data(&degs[sum-1], 4);
+        }
+        sum = 0;
 
     }
 
@@ -71,15 +89,58 @@ int main(int argc, char **argv) {
         io->recv_data(&nres, 4);
         io->recv_data(&ncls, 4);
         io->recv_data(&DEGREE, 4);
+        int temp_num_ClauseRAMs;
+        io->recv_data(&temp_num_ClauseRAMs, 4);
+        assert(temp_num_ClauseRAMs == num_ClauseRAMs);
+
+        // This is as per the calculations in logical sorting the proof file.
+        double batch_size = static_cast<double>(ncls)/num_ClauseRAMs;
+        for (int i = 1; i < num_ClauseRAMs + 1; i++) {
+            ClauseRAM_sizes.push_back(std::floor(batch_size*i) - std::floor(batch_size*(i-1)));
+        }
+
+        for (int i = 0; i < num_ClauseRAMs; i++) {
+            int temp_deg;
+            io->recv_data(&temp_deg, 4);
+            for (int j = 0; j < ClauseRAM_sizes[i]; j++) {
+                degs.push_back(temp_deg);
+            }
+        }
 
         clauses = vector<CLS>(ncls);
         supports = vector<SPT>(ncls);
         pivots = vector < vector < int64_t >> (ncls);
+        indices = vector<int>(ncls);
     }
+
+    //ASK ABOUT THIS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    vector<Integer> map_of_indices(ncls);
+    for (int i = 0; i < ncls; i++) {
+        map_of_indices[indices[i]] = Integer(INDEX_SZ, i, ALICE);
+    }
+    ROZKRAM<BoolIO<NetIO>>* true_to_sorted_index = new ROZKRAM<BoolIO<NetIO>>(party, INDEX_SZ, INDEX_SZ);
+    true_to_sorted_index->init(map_of_indices);
+    vector<Integer> integer_indices;
+    for (int i = 0; i < ncls; i++){
+        integer_indices.push_back(Integer(INDEX_SZ, indices[i], ALICE));
+    }
+    ROZKRAM<BoolIO<NetIO>>* sorted_to_true_index = new ROZKRAM<BoolIO<NetIO>>(party, INDEX_SZ, INDEX_SZ);
+    sorted_to_true_index->init(integer_indices);
+    //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+    cout << degs.size() << endl;
 
     cout << "nres " << nres << endl;
     cout << "ncls " << ncls << endl;
-    cout << "DEGREE " << DEGREE << endl;
+    cout << "nClsRAMs " << num_ClauseRAMs << endl;
+    cout << "Max DEGREE " << DEGREE << endl;
+    int count = 1;
+    sum = 0;
+    for (int i = 0; i < num_ClauseRAMs; i++) {
+        sum += ClauseRAM_sizes[i];
+        cout << "DEGREE " << count << ": " << degs[sum-1] << endl;
+        count++;
+    }
     //if ( ncls > 524287) return 0; 
 
     double cost_input = 0;
@@ -90,11 +151,10 @@ int main(int argc, char **argv) {
  * encode the formula and resolution proof
  * */
     auto timer_0 = chrono::high_resolution_clock::now();
-    vector<clause> raw_formula;
-
+    vector<vector<clause>> raw_formula;
+    vector<clause> temp_sub_raw_formula;
 
     float delta = 0 ;
-
 
     for (int i = 0; i < ncls; i++) {
         delta = delta + 1;
@@ -118,21 +178,37 @@ int main(int argc, char **argv) {
         for (int64_t lit: clauses[i]) {
             literals.push_back((wrap(lit)));
         }
-        padding(literals);
-        clause c(literals);
-        raw_formula.push_back(c);
+        padding(literals, degs[i]);
+        clause c(literals, degs[i]);
+        temp_sub_raw_formula.push_back(c);
+        sum = 0;
+        for (int j = 0; j < num_ClauseRAMs; j++) {
+            sum += ClauseRAM_sizes[j];
+            if (i+1 == sum) {
+                raw_formula.push_back(temp_sub_raw_formula);
+                temp_sub_raw_formula.clear();
+            }
+        }
     }
-    clauseRAM<BoolIO<NetIO>>* formula = new clauseRAM<BoolIO<NetIO>>(party, INDEX_SZ);
-    formula->init(raw_formula);
+    vector<clauseRAM<BoolIO<NetIO>>*> formulas;
+    sum = 0;
+    for (int i = 0; i < num_ClauseRAMs; i++) {
+        sum += ClauseRAM_sizes[i];
+        clauseRAM<BoolIO<NetIO>>* formula = new clauseRAM<BoolIO<NetIO>>(party, INDEX_SZ, degs[sum-1]);
+        formula->init(raw_formula[i]);
+        formulas.push_back(formula);
+    }
     cout <<"finish  input!\n";
     auto timer_1 = chrono::high_resolution_clock::now();
     cost_input = chrono::duration<double>(timer_1 - timer_0).count();
 
     delta = 0;
 
-
-    for (int64_t i = ncls - nres; i < ncls; i++) {
-	    delta = delta + 1;
+    int num_continues = 0;
+    bool skip = false;
+    for (int64_t i = 0; i < ncls; i++) { //TODO: This must change to have the input clauses public
+	    skip = false;
+        delta = delta + 1;
         if ((delta / nres) > 0.1){
             float  progress = (float(i) / ncls);
             delta = 0;
@@ -152,26 +228,33 @@ int main(int argc, char **argv) {
         vector<uint64_t> pvt;
         vector<Integer> chain;
 
-        if (party == ALICE) {
-            chain_length = supports[i].size();
-            io->send_data(&chain_length, 8);
-        }else{
-            io->recv_data(&chain_length, 8);
-        }
-
         SPT s = supports[i];
         PVT p = pivots[i];
 
+        if (party == ALICE) {
+            if (supports[i].size() == 0) {
+                skip = true;
+                io->send_data(&skip, 1);
+            }
+            else {
+                io->send_data(&skip, 1);
+            }
+        }
 
         if (party == BOB) {
-            for (int j = s.size(); j < chain_length; j++) {
+            io->recv_data(&skip, 1);
+            for (int j = s.size(); j < 2; j++) {
                 s.push_back(0L);
             }
-            for (int j = p.size(); j < chain_length - 1; j++) {
+            for (int j = p.size(); j < 1; j++) {
                 p.push_back(0L);
             }
         }
 
+        if (skip == true) {
+            num_continues++;
+            continue;
+        }
 
         assert(s.size() == p.size() +1);
         for (uint64_t index: s) {
@@ -183,16 +266,20 @@ int main(int argc, char **argv) {
             pvt.push_back(pp);
         }
 
-        bool last_clause = (i == (ncls - 1));
-        auto cost = check_chain(chain, pvt, i, formula, last_clause);
+        bool last_clause = (i == 0);
+        //TODO: GET THIS TO WORK!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        auto cost = check_chain(chain, pvt, i, formulas, last_clause, true_to_sorted_index, sorted_to_true_index);
         cost_resolve = cost_resolve + cost.second;
         cost_access = cost_access + cost.first;
     }
+    cout << num_continues << "  " << ncls-nres;
 
     check_zero_MAC(zero_block, 1);
     auto timer_4 = chrono::high_resolution_clock::now();
 
-    formula->check();
+    for (auto formula: formulas) {
+        formula->check();
+    }
 
     auto timer_5 = chrono::high_resolution_clock::now();
     cost_access = cost_access +  chrono::duration<double>(timer_5 - timer_4).count();

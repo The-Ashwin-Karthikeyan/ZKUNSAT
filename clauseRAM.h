@@ -31,6 +31,7 @@ public:
     double	check1 = 0, check2 = 0, check3 = 0;
     int party;
     int index_sz;
+    int deg;
     uint64_t step = 0;
     vector<clause_raw> clear_mem;
     vector<pair<uint64_t, clause_raw>> clear_access_record;
@@ -41,12 +42,13 @@ public:
     block Delta;
     F2kOSTriple<IO> *ostriple = nullptr;
 
-    clauseRAM(int _party, int index_sz): party(_party), index_sz(index_sz) {
+    clauseRAM(int _party, int index_sz, int deg): party(_party), index_sz(index_sz) {
         ZKBoolCircExec<IO> *exec = (ZKBoolCircExec<IO>*)(CircuitExecution::circ_exec);
         io = exec->ostriple->io;
         Delta = exec->ostriple->delta;
+        this->deg = deg;
         ostriple = new F2kOSTriple<IO>(party, exec->ostriple->threads, exec->ostriple->ios, exec->ostriple->ferret, exec->ostriple->pool);
-        for(int i = 0; i < DEGREE; i ++){
+        for(int i = 0; i < deg; i ++){
             hash_block.push_back(one_block);
         }
         hash_pair.first = zero_block;
@@ -58,7 +60,7 @@ public:
     }
 
     void init(vector<clause> &data) {
-        clause_raw val(DEGREE);
+        clause_raw val(deg);
         for(size_t i = 0; i < data.size(); ++i) {
             get_raw(val, data[i]);
             clear_mem.push_back(val);
@@ -69,11 +71,11 @@ public:
 
     clause get(const Integer & index) {
         uint64_t clear_index = index.reveal<uint64_t>(ALICE);
-        clause_raw tmp(DEGREE);
+        clause_raw tmp(deg);
         if(party == ALICE) {
             tmp = clear_mem[clear_index];
         }
-        clause res(tmp);
+        clause res(tmp, deg);
         clear_access_record.push_back(make_pair(clear_index, tmp));
         access_record.push_back(make_pair(index, res));
         ++step;
@@ -93,7 +95,7 @@ public:
         for (int i = 0; i < access_record.size(); i ++){
             auto item  = sorted_clear_access[i];
             sorted_index.push_back(Integer(index_sz, item.first, ALICE));
-            clause c(item.second);
+            clause c(item.second, deg);
             sorted_clause.push_back(c);
         }
 
@@ -141,7 +143,7 @@ public:
 
     void update_hash(){
         io->flush();
-        for (int i  =0; i < DEGREE; i ++){
+        for (int i  =0; i < deg; i ++){
             block r = io->get_hash_block();
             this->hash_block[i] = r;
             io -> flush();
@@ -337,15 +339,16 @@ public:
     }
 };
 
-inline pair<double, double> check_chain(vector<Integer>& indice, vector<uint64_t> pivots, int ptr, clauseRAM<BoolIO<NetIO>>* formula, bool last_clause){
+inline pair<double, double> check_chain(vector<Integer>& indice, vector<uint64_t> pivots, int ptr, vector<clauseRAM<BoolIO<NetIO>>*> formulas, bool last_clause, ROZKRAM<BoolIO<NetIO>>* true_to_sorted_index, ROZKRAM<BoolIO<NetIO>>* sorted_to_true_index){
+    //TODO: FIX THIS
     double cost_resolve = 0;
     double cost_access = 0;
     auto timer_0 = chrono::high_resolution_clock::now();
-    vector<clause> intermediate;
     vector<clause> resource;
     for (Integer index : indice){
-        if (index.geq(Integer(INDEX_SZ, ptr, PUBLIC)).reveal())  error("cheat!");
-        resource.push_back(formula->get(index));
+        Integer PTR = sorted_to_true_index->read(Integer(INDEX_SZ, ptr, PUBLIC));
+        if (index.geq(PTR).reveal())  error("cheat!");
+        resource.push_back(formula->get(true_to_sorted_index->read(index)));
     }
 
     auto timer_1 = chrono::high_resolution_clock::now();
@@ -355,34 +358,17 @@ inline pair<double, double> check_chain(vector<Integer>& indice, vector<uint64_t
 
     auto timer_2 = chrono::high_resolution_clock::now();
 
-    intermediate.push_back(resource[0]);
+    clause c0 = resource[0];
 
+    clause c1 = resource[1];
 
-    for (int i = 1; i < pivots.size(); i++){
-
-        clause a = intermediate[i-1];
-
-        clause b = resource[i];
-
-        clause tmp = get_res_f2k(a, b, pivots[i]);
-
-        intermediate.push_back(tmp);
-
-    }
-    for (int i = 1; i < pivots.size(); i++){
-
-        clause c0 = intermediate[i-1];
-
-        clause c1 = resource[i];
-
-        check_xres(c0, c1, intermediate[i], pivots[i]);
-
-    }
     clause end_clause = formula -> get(Integer(INDEX_SZ, ptr, PUBLIC));
-    end_clause.poly.Equal(intermediate[intermediate.size()-1].poly);
+
+    check_xres(c0, c1, end_clause, pivots[1]);
+
     if (last_clause) {
         vector <uint64_t> empty_literals;
-        clause empty_clause(empty_literals);
+        clause empty_clause(empty_literals, end_clause.poly.deg);
         end_clause.poly.Equal(empty_clause.poly);
     }
     auto timer_3 = chrono::high_resolution_clock::now();
