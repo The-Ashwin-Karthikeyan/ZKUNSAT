@@ -339,16 +339,26 @@ public:
     }
 };
 
-inline pair<double, double> check_chain(vector<Integer>& indice, vector<uint64_t> pivots, int ptr, vector<clauseRAM<BoolIO<NetIO>>*> formulas, bool last_clause, ROZKRAM<BoolIO<NetIO>>* true_to_sorted_index, ROZKRAM<BoolIO<NetIO>>* sorted_to_true_index){
+inline pair<double, double> check_chain(vector<Integer>& indice, vector<uint64_t> pivots, int ptr, vector<clauseRAM<BoolIO<NetIO>>*> formulas, bool last_clause, ROZKRAM<BoolIO<NetIO>>* true_to_sorted_index, ROZKRAM<BoolIO<NetIO>>* sorted_to_true_index, vector<int> ClauseRAM_sizes){
     //TODO: FIX THIS
     double cost_resolve = 0;
     double cost_access = 0;
     auto timer_0 = chrono::high_resolution_clock::now();
     vector<clause> resource;
-    for (Integer index : indice){
+    vector<clauseRAM<BoolIO<NetIO>>*> formulas_for_resources;
+    for (int i = 0; i < 2; i++){
         Integer PTR = sorted_to_true_index->read(Integer(INDEX_SZ, ptr, PUBLIC));
-        if (index.geq(PTR).reveal())  error("cheat!");
-        resource.push_back(formula->get(true_to_sorted_index->read(index)));
+        if (indice[i].geq(PTR).reveal())  error("cheat!");
+        Integer sorted_index = true_to_sorted_index->read(indice[i]);
+        int sum = 0;
+        for (int i = 0; i < ClauseRAM_sizes.size(); i++) {
+            Integer SUM = Integer(INDEX_SZ, sum, PUBLIC);
+            sum += ClauseRAM_sizes[i];
+            if (!sorted_index.geq(Integer(INDEX_SZ, sum, PUBLIC)).reveal()) {
+                formulas_for_resources.push_back(formulas[i]);
+                resource.push_back(formulas[i]->get(sorted_index - SUM));  
+            }
+        }
     }
 
     auto timer_1 = chrono::high_resolution_clock::now();
@@ -362,7 +372,15 @@ inline pair<double, double> check_chain(vector<Integer>& indice, vector<uint64_t
 
     clause c1 = resource[1];
 
-    clause end_clause = formula -> get(Integer(INDEX_SZ, ptr, PUBLIC));
+    int sum = 0;
+    clause end_clause;
+    for (int i = 0; i < ClauseRAM_sizes.size(); i++) {
+        int temp = sum;
+        sum += ClauseRAM_sizes[i];
+        if (ptr < sum) {
+            end_clause = formulas[i]->get(Integer(INDEX_SZ, ptr - temp, PUBLIC));  
+        }
+    }
 
     check_xres(c0, c1, end_clause, pivots[1]);
 

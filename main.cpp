@@ -112,13 +112,20 @@ int main(int argc, char **argv) {
         pivots = vector < vector < int64_t >> (ncls);
         indices = vector<int>(ncls);
     }
-
     //ASK ABOUT THIS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     vector<Integer> map_of_indices(ncls);
-    for (int i = 0; i < ncls; i++) {
-        map_of_indices[indices[i]] = Integer(INDEX_SZ, i, ALICE);
+    if (party == ALICE) {
+        for (int i = 0; i < ncls; i++) {
+            map_of_indices[indices[i]] = Integer(INDEX_SZ, i, ALICE);
+        }
+    }
+    else {
+        for (int i = 0; i < ncls; i++) {
+            map_of_indices[i] = Integer(INDEX_SZ, 0, BOB);
+        }
     }
     ROZKRAM<BoolIO<NetIO>>* true_to_sorted_index = new ROZKRAM<BoolIO<NetIO>>(party, INDEX_SZ, INDEX_SZ);
+    if (party == BOB) assert(1 == 2);
     true_to_sorted_index->init(map_of_indices);
     vector<Integer> integer_indices;
     for (int i = 0; i < ncls; i++){
@@ -268,7 +275,7 @@ int main(int argc, char **argv) {
 
         bool last_clause = (i == 0);
         //TODO: GET THIS TO WORK!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        auto cost = check_chain(chain, pvt, i, formulas, last_clause, true_to_sorted_index, sorted_to_true_index);
+        auto cost = check_chain(chain, pvt, i, formulas, last_clause, true_to_sorted_index, sorted_to_true_index, ClauseRAM_sizes);
         cost_resolve = cost_resolve + cost.second;
         cost_access = cost_access + cost.first;
     }
