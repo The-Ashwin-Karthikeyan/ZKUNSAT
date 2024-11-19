@@ -303,7 +303,7 @@ typedef  vector<int64_t> CLS;
 typedef vector<int64_t> SPT;
 typedef vector<int64_t> PVT;
 
-inline void readproof(string filename, int& d, vector<CLS>& clauses, vector<SPT>& supports, vector<PVT>& pivots, int& ncls, int& nres, vector<int>& degs, vector<int>& indices){
+inline void readproof(string filename, int& d, vector<CLS>& clauses, vector<SPT>& supports, vector<PVT>& pivots, int& ncls, int& nres, vector<int>& degs, vector<uint64_t>& indices){
     std::ifstream file(filename);
     std::string str;
     ncls = 0;

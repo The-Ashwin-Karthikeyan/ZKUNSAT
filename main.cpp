@@ -10,7 +10,7 @@ using namespace std;
 using namespace NTL;
 using namespace emp;
 vector<int> degs; 
-vector<int> indices;
+vector<uint64_t> indices;
 vector<int> ClauseRAM_sizes;
 int num_ClauseRAMs;
 block *mac, *data;
@@ -113,7 +113,7 @@ int main(int argc, char **argv) {
         clauses = vector<CLS>(ncls);
         supports = vector<SPT>(ncls);
         pivots = vector < vector < int64_t >> (ncls);
-        indices = vector<int>(ncls);
+        indices = vector<uint64_t>(ncls);
     }
 
     cout << "nres " << nres << endl;
@@ -276,7 +276,7 @@ int main(int argc, char **argv) {
         cost_resolve = cost_resolve + cost.second;
         cost_access = cost_access + cost.first;
     }
-
+    assert (num_continues == (ncls-nres));
     check_zero_MAC(zero_block, 1);
     auto timer_4 = chrono::high_resolution_clock::now();
 
