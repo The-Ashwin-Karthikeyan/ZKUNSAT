@@ -4,8 +4,11 @@
 #include "commons.h"
 
 int port, party;
-const int threads = 1;
+const int threads = 8;
 int DEGREE = 4;
+using namespace std;
+using namespace NTL;
+using namespace emp;
 vector<int> degs; 
 vector<int> indices;
 vector<int> ClauseRAM_sizes;
@@ -112,30 +115,6 @@ int main(int argc, char **argv) {
         pivots = vector < vector < int64_t >> (ncls);
         indices = vector<int>(ncls);
     }
-    //ASK ABOUT THIS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    vector<Integer> map_of_indices(ncls);
-    if (party == ALICE) {
-        for (int i = 0; i < ncls; i++) {
-            map_of_indices[indices[i]] = Integer(INDEX_SZ, i, ALICE);
-        }
-    }
-    else {
-        for (int i = 0; i < ncls; i++) {
-            map_of_indices[i] = Integer(INDEX_SZ, 0, BOB);
-        }
-    }
-    ROZKRAM<BoolIO<NetIO>>* true_to_sorted_index = new ROZKRAM<BoolIO<NetIO>>(party, INDEX_SZ, INDEX_SZ);
-    if (party == BOB) assert(1 == 2);
-    true_to_sorted_index->init(map_of_indices);
-    vector<Integer> integer_indices;
-    for (int i = 0; i < ncls; i++){
-        integer_indices.push_back(Integer(INDEX_SZ, indices[i], ALICE));
-    }
-    ROZKRAM<BoolIO<NetIO>>* sorted_to_true_index = new ROZKRAM<BoolIO<NetIO>>(party, INDEX_SZ, INDEX_SZ);
-    sorted_to_true_index->init(integer_indices);
-    //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-    cout << degs.size() << endl;
 
     cout << "nres " << nres << endl;
     cout << "ncls " << ncls << endl;
@@ -160,6 +139,24 @@ int main(int argc, char **argv) {
     auto timer_0 = chrono::high_resolution_clock::now();
     vector<vector<clause>> raw_formula;
     vector<clause> temp_sub_raw_formula;
+
+    //ASK ABOUT THIS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    vector<Integer> map_of_indices;
+    for (int i = 0; i < ncls; i++){
+        map_of_indices.push_back(Integer(INDEX_SZ, 0, ALICE));
+    }
+    for (int i = 0; i < ncls; i++) {
+        map_of_indices[indices[i]] = Integer(INDEX_SZ, i, ALICE);
+    }
+    ROZKRAM<BoolIO<NetIO>>* true_to_sorted_index = new ROZKRAM<BoolIO<NetIO>>(party, INDEX_SZ, INDEX_SZ);
+    true_to_sorted_index->init(map_of_indices);
+    vector<Integer> integer_indices;
+    for (int i = 0; i < ncls; i++){
+        integer_indices.push_back(Integer(INDEX_SZ, indices[i], ALICE));
+    }
+    ROZKRAM<BoolIO<NetIO>>* sorted_to_true_index = new ROZKRAM<BoolIO<NetIO>>(party, INDEX_SZ, INDEX_SZ);
+    sorted_to_true_index->init(integer_indices);
+    //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     float delta = 0 ;
 
@@ -279,7 +276,6 @@ int main(int argc, char **argv) {
         cost_resolve = cost_resolve + cost.second;
         cost_access = cost_access + cost.first;
     }
-    cout << num_continues << "  " << ncls-nres;
 
     check_zero_MAC(zero_block, 1);
     auto timer_4 = chrono::high_resolution_clock::now();
@@ -287,6 +283,8 @@ int main(int argc, char **argv) {
     for (auto formula: formulas) {
         formula->check();
     }
+    true_to_sorted_index->check();
+    sorted_to_true_index->check();
 
     auto timer_5 = chrono::high_resolution_clock::now();
     cost_access = cost_access +  chrono::duration<double>(timer_5 - timer_4).count();

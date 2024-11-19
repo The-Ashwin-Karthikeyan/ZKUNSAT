@@ -345,7 +345,6 @@ inline pair<double, double> check_chain(vector<Integer>& indice, vector<uint64_t
     double cost_access = 0;
     auto timer_0 = chrono::high_resolution_clock::now();
     vector<clause> resource;
-    vector<clauseRAM<BoolIO<NetIO>>*> formulas_for_resources;
     for (int i = 0; i < 2; i++){
         Integer PTR = sorted_to_true_index->read(Integer(INDEX_SZ, ptr, PUBLIC));
         if (indice[i].geq(PTR).reveal())  error("cheat!");
@@ -355,8 +354,8 @@ inline pair<double, double> check_chain(vector<Integer>& indice, vector<uint64_t
             Integer SUM = Integer(INDEX_SZ, sum, PUBLIC);
             sum += ClauseRAM_sizes[i];
             if (!sorted_index.geq(Integer(INDEX_SZ, sum, PUBLIC)).reveal()) {
-                formulas_for_resources.push_back(formulas[i]);
-                resource.push_back(formulas[i]->get(sorted_index - SUM));  
+                resource.push_back(formulas[i]->get(sorted_index - SUM));
+                break;
             }
         }
     }
@@ -378,7 +377,8 @@ inline pair<double, double> check_chain(vector<Integer>& indice, vector<uint64_t
         int temp = sum;
         sum += ClauseRAM_sizes[i];
         if (ptr < sum) {
-            end_clause = formulas[i]->get(Integer(INDEX_SZ, ptr - temp, PUBLIC));  
+            end_clause = formulas[i]->get(Integer(INDEX_SZ, ptr - temp, PUBLIC));
+            break;  
         }
     }
 

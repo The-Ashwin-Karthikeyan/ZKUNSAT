@@ -29,12 +29,12 @@ public:
         cout << endl;
     }
 };
-inline void GF2EX2polynomial(GF2EX& a, polynomial& b){
+inline void GF2EX2polynomial(GF2EX& a, polynomial& b, int degree){
 
     long d = deg(a);
-    assert(!(d > b.deg));
+    assert(!(d > degree));
     std::vector<block> coeff;
-    for (long i = 0; i < b.deg; i ++){
+    for (long i = 0; i < degree; i ++){
         GF2E c = NTL::coeff(a, i);
         GF2X raw = c._GF2E__rep;
         block tmp = zero_block;
@@ -44,7 +44,7 @@ inline void GF2EX2polynomial(GF2EX& a, polynomial& b){
         }
         coeff.push_back(tmp);
     }
-    b = polynomial(coeff, b.deg);
+    b = polynomial(coeff, degree);
 }
 
 

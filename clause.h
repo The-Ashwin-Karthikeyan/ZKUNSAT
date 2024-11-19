@@ -43,7 +43,7 @@ public:
 };
 
 
-inline std::vector<polynomial> witness_generator(clause& a, clause& b, clause& res, uint64_t& pivot) {
+inline std::vector<polynomial> witness_generator(clause& a, clause& b, clause& res, uint64_t& pivot, int deg) {
     GF2EX ap, bp, resp;
     GF2EX w0, w1;
     vector<uint64_t> pv{pivot};
@@ -63,21 +63,35 @@ inline std::vector<polynomial> witness_generator(clause& a, clause& b, clause& r
         assert(divide(w1, resp*neg_pivot_p, bp));
     }
     polynomial res0, res1;
-    GF2EX2polynomial(w0, res0);
-    GF2EX2polynomial(w1, res1);
+    GF2EX2polynomial(w0, res0, deg);
+    GF2EX2polynomial(w1, res1, deg);
     std::vector<polynomial> r{res0, res1};
     return  r;
 }
 
 inline void check_xres(clause& c0, clause& c1, clause cres, uint64_t pivot){
-    vector<polynomial> witness = witness_generator(c0, c1, cres, pivot);
+    int deg;
+    if (c0.literals.size() < c1.literals.size()){
+        deg = c1.literals.size();
+        if (c1.literals.size() < cres.literals.size()){
+            deg = cres.literals.size();
+        }
+    }
+    else {
+        deg = c0.literals.size();
+        if (c0.literals.size() < cres.literals.size()){
+            deg = cres.literals.size();
+        }
+    }
+
+    vector<polynomial> witness = witness_generator(c0, c1, cres, pivot, deg);
     vector<block> zero_coeff{zero_block, zero_block, zero_block};
     vector<uint64_t> pivot_v{pivot};
     vector<uint64_t> neg_pivot_v{get_negate(pivot)};
 
     polynomial zero_p = polynomial(zero_coeff, cres.poly.deg);
-    polynomial pivot_polynomial(pivot_v, 1);
-    polynomial pivot_neg_polynomial(neg_pivot_v, 1);
+    polynomial pivot_polynomial(pivot_v, 3);
+    polynomial pivot_neg_polynomial(neg_pivot_v, 3);
     vector<polynomial> c0_res {c0.poly, cres.poly };
     vector<polynomial> c1_res {c1.poly, cres.poly };
     vector<polynomial> witness_pivot{witness[0], pivot_polynomial};
