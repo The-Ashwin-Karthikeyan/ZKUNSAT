@@ -54,10 +54,11 @@ int main(int argc, char **argv) {
     vector <CLS> clauses;
     vector <SPT> supports;
     vector <SPT> pivots;
+    vector <Integer> removed_literals;
 
 
     if (party == ALICE) {
-        readproof(string(prooffile), DEGREE, clauses, supports, pivots, ncls, nres);
+        readproof(string(prooffile), DEGREE, clauses, supports, pivots, ncls, nres, removed_literals); //, literals_list, quantifier_list);
         cout << string(prooffile) << endl;
         cout << "----input proof----" << endl;
         io->send_data(&nres, 4);
