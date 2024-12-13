@@ -140,7 +140,6 @@ int main(int argc, char **argv) {
     vector<vector<clause>> raw_formula;
     vector<clause> temp_sub_raw_formula;
 
-    //ASK ABOUT THIS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     vector<Integer> map_of_indices;
     for (int i = 0; i < ncls; i++){
         map_of_indices.push_back(Integer(INDEX_SZ, 0, ALICE));
@@ -156,7 +155,6 @@ int main(int argc, char **argv) {
     }
     ROZKRAM<BoolIO<NetIO>>* sorted_to_true_index = new ROZKRAM<BoolIO<NetIO>>(party, INDEX_SZ, INDEX_SZ);
     sorted_to_true_index->init(integer_indices);
-    //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     float delta = 0 ;
 
