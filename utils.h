@@ -223,8 +223,8 @@ inline void check_zero_MAC(block MAC, int end = 0) {
  * padding a vector of int64 to the size of degree
  * used when prover input a clause
  */
-inline void padding(vector<uint64_t>& input){
-    for (int i = input.size() ; i < DEGREE; i ++){
+inline void padding(vector<uint64_t>& input, int deg){
+    for (int i = input.size() ; i < deg; i ++){
         input.push_back(0UL);
     }
 }
@@ -303,30 +303,73 @@ typedef  vector<int64_t> CLS;
 typedef vector<int64_t> SPT;
 typedef vector<int64_t> PVT;
 
-inline void readproof(string filename, int& d, vector<CLS>& clauses, vector<SPT>& supports, vector<PVT>& pivots, int& ncls, int& nres, vector<Integer>& removed_literals){
+//NOTE: We are making the assumption that the variables are numbered 1,...,num_vars.
+inline void readproof(string filename, int& d, vector<CLS>& raw_clauses, vector<CLS>& reduced_clauses, vector<SPT>& supports, vector<PVT>& pivots, int& ncls, int& nres, vector<CLS>& removed_literals, vector<CLS>& literals_list, vector<uint64_t>& quantifiers){
     std::ifstream file(filename);
     std::string str;
     ncls = 0;
     nres = 0;
+    int64_t nlits = 0;
     d = 0;
+    quantifiers.push_back(0);
+    CLS l;
+    l.push_back(0);
+    literals_list.push_back(l);
 
     while (std::getline(file, str)) {
         istringstream ss(str);
         string word;
         while (ss >> word) {
-            if (word == "clause:") {
-                int nltr  = 0;
+            if (word == "a") {
+                ss >> word;
+                while (word != "0") {
+                    int i = stoi(word);
+                    CLS literal;
+                    literal.push_back(i);
+                    literals_list.push_back(literal);
+                    literal[0] = -i;
+                    literals_list.push_back(literal);
+                    quantifiers.push_back(2);
+                    quantifiers.push_back(2);
+                    nlits += 2;
+                    ss >> word;
+                }
+            }
+            if (word == "e") {
+                ss >> word;
+                while (word != "0") {
+                    int i = stoi(word);
+                    CLS literal;
+                    literal.push_back(i);
+                    literals_list.push_back(literal);
+                    literal[0] = -i;
+                    literals_list.push_back(literal);
+                    quantifiers.push_back(1);
+                    quantifiers.push_back(1);
+                    nlits += 2;
+                    ss >> word;
+                }
+            }
+            if (word == "raw_clause:") {
+                CLS clause;
+                ss >> word;
+                while (word != "reduced_clause:") {
+                    int i = stoi(word);
+                    clause.push_back(i);
+                    ss >> word;
+                }
+                raw_clauses.push_back(clause);
+                ncls ++ ;
+            }
+            if (word == "raw_clause:") {
                 CLS clause;
                 ss >> word;
                 while (word != "support:") {
                     int i = stoi(word);
                     clause.push_back(i);
-                    nltr = nltr + 1;
                     ss >> word;
                 }
-                if (d < nltr) d = nltr;
-                clauses.push_back(clause);
-                ncls ++ ;
+                reduced_clauses.push_back(clause);
             }
             if (word == "support:") {
                 SPT support;
@@ -341,7 +384,7 @@ inline void readproof(string filename, int& d, vector<CLS>& clauses, vector<SPT>
             if (word == "pivot:") {
                 SPT pchain;
                 ss >> word;
-                while (word != "end:") {
+                while (word != "removed:") {
                     int i = stoi(word);
                     pchain.push_back(wrap(i));
                     ss >> word;
@@ -351,7 +394,16 @@ inline void readproof(string filename, int& d, vector<CLS>& clauses, vector<SPT>
                     nres = nres + 1;
                 }
                 pivots.push_back(pchain);
-
+            }
+            if (word == "removed:") {
+                CLS removed_from_raw;
+                ss >> word;
+                while (word != "end:") {
+                    int i = stoi(word);
+                    removed_from_raw.push_back(i);
+                    ss >> word;
+                }
+                removed_literals.push_back(removed_from_raw);
             }
             if (word == "DEGREE:"){
                 ss >> word;
@@ -359,6 +411,10 @@ inline void readproof(string filename, int& d, vector<CLS>& clauses, vector<SPT>
             }
         }
     }
+    quantifiers.push_back(3);
+    l[0] = nlits/2 + 1;
+    literals_list.push_back(l);
+    literals_list[0] = l;
 }
 
 #endif //ZKUNSAT_NEW_UTILS_H
