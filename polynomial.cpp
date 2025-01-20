@@ -4,9 +4,10 @@
 
 #include "polynomial.h"
 
-polynomial::polynomial(vector<block> _coefficient) {
+polynomial::polynomial(vector<block> _coefficient, int deg) {
     vector<block> mcoefficient;
     vector<block> coefficient;
+    this->deg = deg;
     for (int i = 0; i < _coefficient.size(); i ++){
         block d, m;
         fill_data_and_mac(d, m);
@@ -29,9 +30,10 @@ polynomial::polynomial(vector<block> _coefficient) {
     this->mcoefficient = mcoefficient;
 }
 
-polynomial::polynomial(vector <uint64_t> roots) {
+polynomial::polynomial(vector <uint64_t> roots, int deg) {
     GF2EX res, tmp;
     SetCoeff(res, 0); // res = 1
+    this->deg = deg;
     for (auto r : roots){
         tmp = GF2EX();
         GF2E coefficient, constant;
@@ -51,7 +53,7 @@ polynomial::polynomial(vector <uint64_t> roots) {
 
     std::vector<block> _coefficient;
 
-    for (long i = 0; i < DEGREE; i ++){
+    for (long i = 0; i < deg; i ++){
         GF2E c = NTL::coeff(res, i);
         GF2X raw = c._GF2E__rep;
         block tmp = zero_block;
@@ -63,7 +65,7 @@ polynomial::polynomial(vector <uint64_t> roots) {
     }
     vector<block> mcoefficient;
     vector<block> coefficient;
-    for (int i = 0; i < DEGREE; i ++){
+    for (int i = 0; i < deg; i ++){
         block d, m;
         fill_data_and_mac(d, m);
 
@@ -174,4 +176,41 @@ void polynomial::ConverseCheck(polynomial & lhs) {
     lhs.Evaluate(yy, ym, converse_r);
     check_zero_MAC(xm^ym);
     // cout << "converse block: " << (xx ^ yy)  << endl; 
+}
+
+/* Check if product of polynomials in p1 = product of polynomials in p2.
+* Assumes each vector has at least one polynomial.
+*/
+void polynomial::ProdOfPolysEqual(vector<polynomial> &p1, vector<polynomial> &p2) {
+    io->flush();
+    block r =io->get_hash_block();
+    int d1 = p1.size();
+    block xx, xm, res1, mres1;
+    p1[0].Evaluate(xx, xm, r);
+    if (d1 == 1) {
+        res1 = xx;
+        mres1 = xm;
+    }
+    for (int  i = 1; i < d1; i++){
+        block yy, ym;
+        p1[i].Evaluate(yy, ym, r);
+        ostriple->compute_mul(res1, mres1, xx, xm, yy, ym);
+        xx = res1;
+        xm = mres1;
+    }
+    int d2 = p2.size();
+    block res2, mres2;
+    p2[0].Evaluate(xx, xm, r);
+    if (d2 == 1) {
+        res2 = xx;
+        mres2 = xm;
+    }
+    for (int  i = 1; i < d2; i++){
+        block yy, ym;
+        p2[i].Evaluate(yy, ym, r);
+        ostriple->compute_mul(res2, mres2, xx, xm, yy, ym);
+        xx = res2;
+        xm = mres2;
+    }
+    check_zero_MAC(mres1^mres2);
 }
