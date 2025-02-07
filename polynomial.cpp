@@ -178,6 +178,29 @@ void polynomial::ConverseCheck(polynomial & lhs) {
     // cout << "converse block: " << (xx ^ yy)  << endl; 
 }
 
+void polynomial::NonConverseCheck(polynomial & lhs) {
+    // for (int i = 0; i < this-> coefficient.size(); i ++) cout << i << ":" << (this-> coefficient[i]) << ", mac: " << (this-> mcoefficient[i]) << endl; 
+    // cout << "========\n";
+    // for (int i = 0; i < lhs.coefficient.size(); i ++) cout << (lhs.coefficient[i]) << ", mac: " << (lhs.mcoefficient[i]) << endl; 
+
+
+    io->flush();
+    block r =io->get_hash_block();
+    //  cout << "====last coefficient=======" << endl;
+    block converse_r = ((block) get_128uint_from_uint64(constant))^r;
+    // cout << (lhs.coefficient[0] ^ this -> coefficient[0]) << endl; 
+    //  cout << (converse_r) << endl; 
+    //  cout << (r) << endl; 
+    block xx, xm, yy, ym;
+ //   cout << "====rhs =======" << endl;
+    this->Evaluate(xx, xm, r);
+    // cout << "====lhs =======" << endl;
+    lhs.Evaluate(yy, ym, converse_r);
+
+    check_non_zero_MAC(xm^ym);
+    // cout << "converse block: " << (xx ^ yy)  << endl; 
+}
+
 /* Check if product of polynomials in p1 = product of polynomials in p2.
 * Assumes each vector has at least one polynomial.
 */
