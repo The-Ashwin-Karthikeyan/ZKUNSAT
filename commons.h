@@ -9,9 +9,13 @@
 #include <NTL/GF2EX.h>
 #include <NTL/GF2E.h>
 #include <NTL/GF2EXFactoring.h>
+#include <map>
 #include "emp-zk/emp-vole-f2k/base_svole.h"
+#include <algorithm>
 
-
+extern vector<int64_t> quantifiers;
+extern uint64_t pad_lit;
+extern int nlits;
 extern SVoleF2k<BoolIO<NetIO>> *svole;
 extern F2kOSTriple<BoolIO<NetIO>>* ostriple;
 extern BoolIO<NetIO>* io;
