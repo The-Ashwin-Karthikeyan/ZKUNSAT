@@ -21,6 +21,7 @@ public:
     void InnerProductEqual(vector<polynomial>& p1, vector<polynomial>& p2);
     void ProductEqual(polynomial& p1, polynomial& p2);
     void ConverseCheck(polynomial& lhs);
+    void NonConverseCheck(polynomial& lhs);
     void ProdOfPolysEqual(vector<polynomial> &p1, vector<polynomial> &p2);
 
     void print() {
