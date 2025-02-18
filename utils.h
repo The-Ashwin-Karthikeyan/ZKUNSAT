@@ -361,4 +361,47 @@ inline void readproof(string filename, int& d, vector<CLS>& clauses, vector<SPT>
     }
 }
 
+inline void readskolem(string filename, int& d, vector<CLS>& dependencies, vector<SPT>& skolem_supports, int num_ands, int num_ins, int num_outs) {
+    std::ifstream file(filename);
+    std::string str;
+    num_ands = 0;
+    num_ins = 0;
+    num_outs = 0;
+    d = 0;
+    vector<int> inputs;
+    vector<int> outputs;
+
+    int count_ins = 0;
+    int count_outs = 0;
+    int count_ands = 0;
+
+    while (std::getline(file, str)) {
+        istringstream ss(str);
+        string word;
+        while (ss >> word) {
+            if (word == "aag") {
+                ss >> word;
+                ss >> word;
+                int num_ins = stoi(word);
+                ss >> word;
+                ss >> word;
+                int num_outs = stoi(word);
+                ss >> word;
+                int num_ands = stoi(word);
+            }
+            if (count_ins < num_ins) {
+                inputs.push_back(stoi(word));
+                count_ins++;
+            }
+            else if (count_outs < num_outs) {
+                outputs.push_back(stoi(word));
+                count_outs++;
+            }
+            else {
+                //TODO: Read the assingment lines in the aiger-ascii file for the skolem function. 
+            }
+        }
+    }
+}
+
 #endif //ZKUNSAT_NEW_UTILS_H

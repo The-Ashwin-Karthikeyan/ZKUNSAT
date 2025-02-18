@@ -20,7 +20,8 @@ int main(int argc, char **argv) {
     BoolIO <NetIO> *ios[threads];
     for (int i = 0; i < threads; ++i)
         ios[i] = new BoolIO<NetIO>(new NetIO(party == ALICE ? nullptr : argv[3], port + i), party == ALICE);       
-    char *prooffile = argv[4];
+    char *skolemfile = argv[4];    
+    char *prooffile = argv[5];
 
     setup_zk_bool < BoolIO < NetIO >> (ios, threads, party);
     ZKBoolCircExec <BoolIO<NetIO>> *exec = (ZKBoolCircExec < BoolIO < NetIO >> *)(CircuitExecution::circ_exec);
@@ -50,13 +51,18 @@ int main(int argc, char **argv) {
 
 
     int ncls = 0, nres = 0;
+    int skolem_deg = 0;
 
     vector <CLS> clauses;
     vector <SPT> supports;
     vector <SPT> pivots;
 
+    vector <CLS> dependencies;
+    vector <SPT> skolem_supports;
+    int num_ands = 0, num_ins = 0, num_outs = 0;
 
     if (party == ALICE) {
+        readskolem(string(skolemfile), skolem_deg, dependencies, skolem_supports, num_ands, num_ins, num_outs);
         readproof(string(prooffile), DEGREE, clauses, supports, pivots, ncls, nres);
         cout << string(prooffile) << endl;
         cout << "----input proof----" << endl;
