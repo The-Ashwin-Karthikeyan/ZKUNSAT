@@ -3,6 +3,7 @@ from array import array
 from dataclasses import dataclass
 from math import floor
 
+inputvar_to_quantlevel = {0: 0}
 dependencies = {}
 indices = {}
 num_ins = 0
@@ -16,10 +17,14 @@ class AIGERline:
     support : array;
 
     def print(self):
+        max_dep = 0
+        for i in dependencies[self.var]:
+            if max_dep < inputvar_to_quantlevel[i]:
+                max_dep = inputvar_to_quantlevel[i]
         if self.support:
-            print("index: ", self.index, " var: ", self.var, " support: ", " ".join([str(i) for i in self.support]), " dep: ", " ".join([str(i) for i in dependencies[self.var]]))
+            print("index: ", self.index, " var: ", self.var, " support: ", " ".join([str(i) for i in self.support]), " dep: ", max_dep)
         else:
-            print("index: ", self.index, " var: ", self.var, " support: ", " dep: ", " ".join([str(i) for i in dependencies[self.var]]))
+            print("index: ", self.index, " var: ", self.var, " support: ", " dep: ", max_dep)
 
 
 def read_aiger_line(line, index):
@@ -85,7 +90,24 @@ def parse(skofile):
     return aig
 
 
-skofile = sys.argv[1]
+def get_dep_to_quantlevel(qbffile):
+    qbf = open(qbffile, 'r')
+    Lines = qbf.readlines()
+    global inputvar_to_quantlevel
+    counter = 0
+
+    for str in Lines:
+        line = str.split(" ")
+        if (line[0] == 'a'):
+            counter += 1
+            for var in line[1:]:
+                if (var != '0\n'):
+                    inputvar_to_quantlevel[int(var)] = counter
+
+
+qbffile = sys.argv[1]
+skofile = sys.argv[2]
+get_dep_to_quantlevel(qbffile)
 final_skolem = parse(skofile)
 for line in final_skolem:
     line.print()
