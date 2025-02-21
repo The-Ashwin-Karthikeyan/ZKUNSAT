@@ -57,12 +57,13 @@ int main(int argc, char **argv) {
     vector <SPT> supports;
     vector <SPT> pivots;
 
-    vector <CLS> dependencies;
+    vector <int> dependencies;
+    vector <CLS> vars;
     vector <SPT> skolem_supports;
-    int num_ands = 0, num_ins = 0, num_outs = 0;
+    int num_ands = 0, num_ins = 0, num_outs = 0, max_var = 0;
 
     if (party == ALICE) {
-        readskolem(string(skolemfile), skolem_deg, dependencies, skolem_supports, num_ands, num_ins, num_outs);
+        readskolem(string(skolemfile), vars, dependencies, skolem_supports, num_ands, num_ins, num_outs, max_var);
         readproof(string(prooffile), DEGREE, clauses, supports, pivots, ncls, nres);
         cout << string(prooffile) << endl;
         cout << "----input proof----" << endl;

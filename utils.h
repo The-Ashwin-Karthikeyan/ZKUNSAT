@@ -361,44 +361,54 @@ inline void readproof(string filename, int& d, vector<CLS>& clauses, vector<SPT>
     }
 }
 
-inline void readskolem(string filename, int& d, vector<CLS>& dependencies, vector<SPT>& skolem_supports, int num_ands, int num_ins, int num_outs) {
+inline void readskolem(string filename, vector<CLS>& vars, vector<int>& dependencies, vector<SPT>& skolem_supports, int& num_ands, int& num_ins, int& num_outs, int& max_var) {
     std::ifstream file(filename);
     std::string str;
     num_ands = 0;
     num_ins = 0;
     num_outs = 0;
-    d = 0;
     vector<int> inputs;
     vector<int> outputs;
-
-    int count_ins = 0;
-    int count_outs = 0;
-    int count_ands = 0;
 
     while (std::getline(file, str)) {
         istringstream ss(str);
         string word;
         while (ss >> word) {
-            if (word == "aag") {
+            if (word == "var:") {
+                CLS var;
                 ss >> word;
-                ss >> word;
-                int num_ins = stoi(word);
-                ss >> word;
-                ss >> word;
-                int num_outs = stoi(word);
-                ss >> word;
-                int num_ands = stoi(word);
+                int i = stoi(word);
+                var.push_back(i);
+                var.push_back(-i);
+                vars.push_back(var);
             }
-            if (count_ins < num_ins) {
-                inputs.push_back(stoi(word));
-                count_ins++;
+            if (word == "support:") {
+                SPT support;
+                ss >> word;
+                while (word != "dep:") {
+                    int i = stoi(word);
+                    support.push_back(i);
+                    ss >> word;
+                }
+                if (support.size() == 0) {
+                    num_ins++;
+                }
+                else {
+                    num_ands++;
+                }
+                skolem_supports.push_back(support);
             }
-            else if (count_outs < num_outs) {
-                outputs.push_back(stoi(word));
-                count_outs++;
+            if (word == "dep:") {
+                ss >> word;
+                dependencies.push_back(stoi(word)); 
             }
-            else {
-                //TODO: Read the assingment lines in the aiger-ascii file for the skolem function. 
+            if (word == "Maxvar:") {
+                ss >> word;
+                max_var = stoi(word);
+            }
+            if (word == "Numouts:") {
+                ss >> word;
+                num_outs = stoi(word);
             }
         }
     }

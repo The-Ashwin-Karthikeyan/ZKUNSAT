@@ -112,3 +112,4 @@ final_skolem = parse(skofile)
 for line in final_skolem:
     line.print()
 print("Maxvar: ", max_var)
+print("Numouts: ", num_outs)
