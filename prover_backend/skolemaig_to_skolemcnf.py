@@ -7,6 +7,7 @@ dependencies = {}
 indices = {}
 num_ins = 0
 num_outs = 0
+max_var = 0
 
 @dataclass
 class AIGERline:
@@ -57,6 +58,7 @@ def parse(skofile):
     global num_outs
     global indices
     global dependencies
+    global max_var
 
     indices[0] = 0
     dependencies[0] = [0]
@@ -64,6 +66,7 @@ def parse(skofile):
     for str in Lines:
         line = str.split(" ")
         if line[0] == "aag":
+            max_var = int(line[1])
             num_ins = int(line[2])
             num_outs = int(line[4])
         elif counter <= num_ins:
@@ -86,3 +89,4 @@ skofile = sys.argv[1]
 final_skolem = parse(skofile)
 for line in final_skolem:
     line.print()
+print("Maxvar: ", max_var)
