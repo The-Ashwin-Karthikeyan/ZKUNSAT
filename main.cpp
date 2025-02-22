@@ -125,8 +125,13 @@ int main(int argc, char **argv) {
             variable.push_back(wrap(lit));
         }
         padding(variable, 3);
-
+        clause tmp(variable, 3);
+        variables.push_back(tmp);
     }
+    clauseRAM<BoolIO<NetIO>>* skolem_vars_CR = new clauseRAM<BoolIO<NetIO>>(party, INDEX_SZ, 3);
+    skolem_vars_CR->init(variables);
+    ROZKRAM<BoolIO<NetIO>>* dependencies_ROZKRAM = new ROZKRAM<BoolIO<NetIO>>(party, INDEX_SZ, INDEX_SZ);
+    dependencies_ROZKRAM->init(pvt_deps);
 
 
     float delta = 0 ;
@@ -166,6 +171,14 @@ int main(int argc, char **argv) {
 
     delta = 0;
 
+    for (int i = 0; i < ncls - nres; i++) {
+        if (i < 3*(num_ins+num_ands)) {
+            //HANDLE THE PROOF OF CONVERSION OF SKOLEM AIGER TO CNF
+        }
+        else {
+            //VERIFY THE REST OF THE INPUT CNF FOR ZKUNSAT WITH VERIFIER'S COPY OF !QBF
+        }
+    }
 
     for (int64_t i = ncls - nres; i < ncls; i++) {
 	    delta = delta + 1;
