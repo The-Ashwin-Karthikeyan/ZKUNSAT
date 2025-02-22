@@ -38,7 +38,7 @@ int main(int argc, char **argv) {
     data = new block[svole->param.n];
     mac = new block[svole->param.n];
     svole->extend_inplace(data, mac, svole->param.n);
-    cout << "----set up----" << endl;
+    cout << endl << "----set up----" << endl << endl;
 
     GF2X P;
 //    random(P, 128);
@@ -64,9 +64,24 @@ int main(int argc, char **argv) {
 
     if (party == ALICE) {
         readskolem(string(skolemfile), vars, dependencies, skolem_supports, num_ands, num_ins, num_outs, max_var);
+        cout << string(skolemfile) << endl;
+        io->send_data(&num_ins, 4);
+        io->send_data(&num_outs, 4);
+        io->send_data(&num_ands, 4);
+    }
+    if (party == BOB) {
+        io->recv_data(&num_ins, 4);
+        io->recv_data(&num_outs, 4);
+        io->recv_data(&num_ands, 4);
+    }
+    cout << "----Skolem Function----" << endl;
+    cout << "number of input variables: " << num_ins << endl;
+    cout << "number of output variables: " << num_outs << endl;
+    cout << "number of and gates: " << num_ands << endl;
+
+    if (party == ALICE) {
         readproof(string(prooffile), DEGREE, clauses, supports, pivots, ncls, nres);
         cout << string(prooffile) << endl;
-        cout << "----input proof----" << endl;
         io->send_data(&nres, 4);
         io->send_data(&ncls, 4);
         io->send_data(&DEGREE, 4);
@@ -82,10 +97,12 @@ int main(int argc, char **argv) {
         supports = vector<SPT>(ncls);
         pivots = vector < vector < int64_t >> (ncls);
     }
-
-    cout << "nres " << nres << endl;
-    cout << "ncls " << ncls << endl;
-    cout << "DEGREE " << DEGREE << endl;
+    cout << "----input proof----" << endl;
+    cout << "number of resolution steps: " << nres << endl;
+    cout << "total number of clauses: " << ncls << endl;
+    cout << "DEGREE for ZKUNSAT: " << DEGREE << endl << endl;
+    cout << "----end set up----" << endl << endl;
+    cout << "----loading input----" << endl;
     //if ( ncls > 524287) return 0; 
 
     double cost_input = 0;
