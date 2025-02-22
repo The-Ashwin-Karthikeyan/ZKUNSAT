@@ -4,9 +4,10 @@
 
 #include "polynomial.h"
 
-polynomial::polynomial(vector<block> _coefficient) {
+polynomial::polynomial(vector<block> _coefficient, int deg) {
     vector<block> mcoefficient;
     vector<block> coefficient;
+    this->deg = deg;
     for (int i = 0; i < _coefficient.size(); i ++){
         block d, m;
         fill_data_and_mac(d, m);
@@ -29,9 +30,10 @@ polynomial::polynomial(vector<block> _coefficient) {
     this->mcoefficient = mcoefficient;
 }
 
-polynomial::polynomial(vector <uint64_t> roots) {
+polynomial::polynomial(vector <uint64_t> roots, int deg) {
     GF2EX res, tmp;
     SetCoeff(res, 0); // res = 1
+    this->deg = deg;
     for (auto r : roots){
         tmp = GF2EX();
         GF2E coefficient, constant;
@@ -51,7 +53,7 @@ polynomial::polynomial(vector <uint64_t> roots) {
 
     std::vector<block> _coefficient;
 
-    for (long i = 0; i < DEGREE; i ++){
+    for (long i = 0; i < deg; i ++){
         GF2E c = NTL::coeff(res, i);
         GF2X raw = c._GF2E__rep;
         block tmp = zero_block;
@@ -63,7 +65,7 @@ polynomial::polynomial(vector <uint64_t> roots) {
     }
     vector<block> mcoefficient;
     vector<block> coefficient;
-    for (int i = 0; i < DEGREE; i ++){
+    for (int i = 0; i < deg; i ++){
         block d, m;
         fill_data_and_mac(d, m);
 

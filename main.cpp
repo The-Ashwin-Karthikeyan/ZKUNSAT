@@ -57,7 +57,7 @@ int main(int argc, char **argv) {
     vector <SPT> supports;
     vector <SPT> pivots;
 
-    vector <int> dependencies;
+    vector <int64_t> dependencies;
     vector <CLS> vars;
     vector <SPT> skolem_supports;
     int num_ands = 0, num_ins = 0, num_outs = 0, max_var = 0;
@@ -73,11 +73,12 @@ int main(int argc, char **argv) {
         io->recv_data(&num_ins, 4);
         io->recv_data(&num_outs, 4);
         io->recv_data(&num_ands, 4);
+        dependencies = vector<int64_t>(num_ins+num_ands);
     }
     cout << "----Skolem Function----" << endl;
     cout << "number of input variables: " << num_ins << endl;
     cout << "number of output variables: " << num_outs << endl;
-    cout << "number of and gates: " << num_ands << endl;
+    cout << "number of and gates: " << num_ands << endl << endl;
 
     if (party == ALICE) {
         readproof(string(prooffile), DEGREE, clauses, supports, pivots, ncls, nres);
@@ -115,6 +116,18 @@ int main(int argc, char **argv) {
     auto timer_0 = chrono::high_resolution_clock::now();
     vector<clause> raw_formula;
 
+    vector<Integer> pvt_deps;
+    vector<clause> variables;
+    for (int i = 0; i < num_ands+num_ins; i++) {
+        pvt_deps.push_back(Integer(INDEX_SZ, dependencies[i], ALICE));
+        vector<uint64_t> variable;
+        for (int64_t lit: vars[i]){
+            variable.push_back(wrap(lit));
+        }
+        padding(variable, 3);
+
+    }
+
 
     float delta = 0 ;
 
@@ -141,11 +154,11 @@ int main(int argc, char **argv) {
         for (int64_t lit: clauses[i]) {
             literals.push_back((wrap(lit)));
         }
-        padding(literals);
-        clause c(literals);
+        padding(literals, DEGREE);
+        clause c(literals, DEGREE);
         raw_formula.push_back(c);
     }
-    clauseRAM<BoolIO<NetIO>>* formula = new clauseRAM<BoolIO<NetIO>>(party, INDEX_SZ);
+    clauseRAM<BoolIO<NetIO>>* formula = new clauseRAM<BoolIO<NetIO>>(party, INDEX_SZ, DEGREE);
     formula->init(raw_formula);
     cout <<"finish  input!\n";
     auto timer_1 = chrono::high_resolution_clock::now();

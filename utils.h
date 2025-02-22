@@ -223,8 +223,8 @@ inline void check_zero_MAC(block MAC, int end = 0) {
  * padding a vector of int64 to the size of degree
  * used when prover input a clause
  */
-inline void padding(vector<uint64_t>& input){
-    for (int i = input.size() ; i < DEGREE; i ++){
+inline void padding(vector<uint64_t>& input, int deg){
+    for (int i = input.size() ; i < deg; i ++){
         input.push_back(0UL);
     }
 }
@@ -361,7 +361,7 @@ inline void readproof(string filename, int& d, vector<CLS>& clauses, vector<SPT>
     }
 }
 
-inline void readskolem(string filename, vector<CLS>& vars, vector<int>& dependencies, vector<SPT>& skolem_supports, int& num_ands, int& num_ins, int& num_outs, int& max_var) {
+inline void readskolem(string filename, vector<CLS>& vars, vector<int64_t>& dependencies, vector<SPT>& skolem_supports, int& num_ands, int& num_ins, int& num_outs, int& max_var) {
     std::ifstream file(filename);
     std::string str;
     num_ands = 0;
