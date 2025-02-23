@@ -64,4 +64,4 @@ else:
         for clause in qbf_matrix[2:]:
             current_var += 2
             print(current_var, clause.accumulated_neg_var+1, current_var-2)
-print("Maxvar: ", int(current_var/2))
+print("Maxvar:", int(current_var/2))
