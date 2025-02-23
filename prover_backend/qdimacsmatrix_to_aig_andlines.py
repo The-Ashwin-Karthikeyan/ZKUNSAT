@@ -12,14 +12,14 @@ class QBFClause:
         global current_var
         if (len(self.clause) == 1):
             current_var = current_var + 2    
-            print(current_var, " ", 2 * abs(self.clause[0]) + (0 if self.clause[0] < 0 else 1), " ", 1)
+            print(current_var, 2 * abs(self.clause[0]) + (0 if self.clause[0] < 0 else 1), 1)
         else:
             current_var += 2
-            print(current_var, " ", 2 * abs(self.clause[0]) + (0 if self.clause[0] < 0 else 1), " ", 2 * abs(self.clause[1]) + (0 if self.clause[1] < 0 else 1))
+            print(current_var, 2 * abs(self.clause[0]) + (0 if self.clause[0] < 0 else 1), 2 * abs(self.clause[1]) + (0 if self.clause[1] < 0 else 1))
             if len(self.clause) > 2:
                 for i in self.clause[2:]:
                     current_var += 2
-                    print(current_var, " ", 2 * abs(i) + (0 if i < 0 else 1), " ", current_var-2)
+                    print(current_var, 2 * abs(i) + (0 if i < 0 else 1), current_var-2)
         self.accumulated_neg_var = current_var
 
 
@@ -53,13 +53,15 @@ qbf_matrix = parse(qbffile)
 for clause in qbf_matrix:
     clause.print()
 if len(qbf_matrix) == 1:
-    print("Output: ", qbf_matrix[0].accumulated_neg_var+1)
+    try:
+        assert(qbf_matrix[0].accumulated_neg_var == current_var)
+    except:
+        print("Something is wrong.")
 else:
     current_var += 2
-    print(current_var, " ", qbf_matrix[0].accumulated_neg_var+1," ", qbf_matrix[1].accumulated_neg_var+1)
+    print(current_var, qbf_matrix[0].accumulated_neg_var+1, qbf_matrix[1].accumulated_neg_var+1)
     if len(qbf_matrix) > 2:
         for clause in qbf_matrix[2:]:
             current_var += 2
-            print(current_var, " ", clause.accumulated_neg_var+1, " ", current_var-2)
-    print("Output: ", current_var+1)
-print("Maxvar: ", current_var/2)
+            print(current_var, clause.accumulated_neg_var+1, current_var-2)
+print("Maxvar: ", int(current_var/2))
