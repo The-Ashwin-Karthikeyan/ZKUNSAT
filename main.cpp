@@ -74,6 +74,8 @@ int main(int argc, char **argv) {
         io->recv_data(&num_outs, 4);
         io->recv_data(&num_ands, 4);
         dependencies = vector<int64_t>(num_ins+num_ands);
+        vars = vector<CLS>(num_ins+num_ands);
+        skolem_supports = vector<SPT>(num_ins+num_ands);
     }
     cout << "----Skolem Function----" << endl;
     cout << "number of input variables: " << num_ins << endl;
@@ -171,9 +173,20 @@ int main(int argc, char **argv) {
 
     delta = 0;
 
+    cout << num_ins+num_ands;
     for (int i = 0; i < ncls - nres; i++) {
-        if (i < 3*(num_ins+num_ands)) {
-            //HANDLE THE PROOF OF CONVERSION OF SKOLEM AIGER TO CNF
+        if (i < (3*(num_ins+num_ands))) {
+            if (i % 3 == 0){
+                skolem_vars_CR->get(Integer(INDEX_SZ, int(i/3), PUBLIC));
+        
+                SPT s = skolem_supports[int(i/3)];
+        
+                if (party == BOB) {        
+                    s.push_back(0L);
+                    s.push_back(0L);
+                }
+
+            }
         }
         else {
             //VERIFY THE REST OF THE INPUT CNF FOR ZKUNSAT WITH VERIFIER'S COPY OF !QBF
