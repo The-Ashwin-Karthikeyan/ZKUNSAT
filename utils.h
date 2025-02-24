@@ -418,12 +418,13 @@ inline void readskolem(string filename, vector<CLS>& vars, vector<int64_t>& depe
     }
 }
 
-inline void readnegqbf(string filename, vector<uint64_t>& e_vars, vector<uint64_t>& a_vars, vector<CLS>& negqbf_clauses) {
+inline void readnegqbf(string filename, vector<uint64_t>& e_vars, vector<uint64_t>& a_vars, vector<CLS>& negqbf_clauses, vector<uint64_t> max_dep_for_e_vars) {
     std::ifstream file(filename);
     std::string str;
     vector<int> inputs;
     vector<int> outputs;
     bool start_reading_clauses = false;
+    uint64_t forall_level = 0;
 
     while (std::getline(file, str)) {
         istringstream ss(str);
@@ -436,12 +437,14 @@ inline void readnegqbf(string filename, vector<uint64_t>& e_vars, vector<uint64_
                     a_vars.push_back(i);
                     ss >> word; 
                 }
+                forall_level++;
             }
             if (word == "e") {
                 ss >> word;
                 while (word != "0") {
                     int i = stoi(word);
                     e_vars.push_back(i);
+                    max_dep_for_e_vars.push_back(forall_level);
                     ss >> word; 
                 }
             }

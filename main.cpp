@@ -88,8 +88,9 @@ int main(int argc, char **argv) {
     vector <uint64_t> e_vars;
     vector <uint64_t> a_vars;
     vector <CLS> negqbf_clauses;
+    vector <uint64_t> max_dep_for_e_vars;
 
-    readnegqbf(string(negqbffile), e_vars, a_vars, negqbf_clauses);
+    readnegqbf(string(negqbffile), e_vars, a_vars, negqbf_clauses, max_dep_for_e_vars);
     
     cout << "----Negative matrix----" << endl;
     cout << "number of forall variables: " << a_vars.size() << endl;
