@@ -1,4 +1,5 @@
 #include <iostream>
+#include <map>
 #include "clause.h"
 #include "clauseRAM.h"
 #include "commons.h"
@@ -19,9 +20,10 @@ int main(int argc, char **argv) {
     parse_party_and_port(argv, &party, &port);
     BoolIO <NetIO> *ios[threads];
     for (int i = 0; i < threads; ++i)
-        ios[i] = new BoolIO<NetIO>(new NetIO(party == ALICE ? nullptr : argv[3], port + i), party == ALICE);       
-    char *skolemfile = argv[4];    
-    char *prooffile = argv[5];
+        ios[i] = new BoolIO<NetIO>(new NetIO(party == ALICE ? nullptr : argv[3], port + i), party == ALICE);  
+    char *negqbffile = argv[4];     
+    char *skolemfile = argv[5];    
+    char *prooffile = argv[6];
 
     setup_zk_bool < BoolIO < NetIO >> (ios, threads, party);
     ZKBoolCircExec <BoolIO<NetIO>> *exec = (ZKBoolCircExec < BoolIO < NetIO >> *)(CircuitExecution::circ_exec);
@@ -49,25 +51,21 @@ int main(int argc, char **argv) {
     SetCoeff(P, 0, 1);
     GF2E::init(P);
 
-
-    int ncls = 0, nres = 0;
     int skolem_deg = 0;
 
-    vector <CLS> clauses;
-    vector <SPT> supports;
-    vector <SPT> pivots;
-
     vector <int64_t> dependencies;
+    std::map <uint64_t, uint64_t> var_to_index;
     vector <CLS> vars;
     vector <SPT> skolem_supports;
     int num_ands = 0, num_ins = 0, num_outs = 0, max_var = 0;
 
     if (party == ALICE) {
-        readskolem(string(skolemfile), vars, dependencies, skolem_supports, num_ands, num_ins, num_outs, max_var);
+        readskolem(string(skolemfile), vars, dependencies, skolem_supports, num_ands, num_ins, num_outs, max_var, var_to_index);
         cout << string(skolemfile) << endl;
         io->send_data(&num_ins, 4);
         io->send_data(&num_outs, 4);
         io->send_data(&num_ands, 4);
+        assert(var_to_index.size() == num_ins+num_ands);
     }
     if (party == BOB) {
         io->recv_data(&num_ins, 4);
@@ -76,11 +74,34 @@ int main(int argc, char **argv) {
         dependencies = vector<int64_t>(num_ins+num_ands);
         vars = vector<CLS>(num_ins+num_ands);
         skolem_supports = vector<SPT>(num_ins+num_ands);
+        for (int i = 1; i <= num_ins+num_ands; i++) {
+            var_to_index[i] = 0;
+        }
     }
     cout << "----Skolem Function----" << endl;
     cout << "number of input variables: " << num_ins << endl;
     cout << "number of output variables: " << num_outs << endl;
     cout << "number of and gates: " << num_ands << endl << endl;
+
+    // This section is to get the negated matrix from both the prover and the verifier
+    // So it assumes that the qbf is public. A private qbf version may be in a different branch
+    vector <uint64_t> e_vars;
+    vector <uint64_t> a_vars;
+    vector <CLS> negqbf_clauses;
+
+    readnegqbf(string(negqbffile), e_vars, a_vars, negqbf_clauses);
+    
+    cout << "----Negative matrix----" << endl;
+    cout << "number of forall variables: " << a_vars.size() << endl;
+    cout << "number of existential variables: " << e_vars.size() << endl;
+    cout << "number of clauses: " << negqbf_clauses.size() << endl << endl;
+
+    int ncls = 0, nres = 0;
+    // This is the end of the aforementioned public qbf reading section.
+
+    vector <CLS> clauses;
+    vector <SPT> supports;
+    vector <SPT> pivots;
 
     if (party == ALICE) {
         readproof(string(prooffile), DEGREE, clauses, supports, pivots, ncls, nres);
@@ -173,7 +194,17 @@ int main(int argc, char **argv) {
 
     delta = 0;
 
-    cout << num_ins+num_ands;
+    for (int i = 1; i <= num_ins + num_ands; i++) {
+        if (i < num_ins){
+            Integer index = Integer(INDEX_SZ, var_to_index[i], ALICE);
+            vector<uint64_t> temp_roots;
+            temp_roots.push_back(wrap(i));
+            temp_roots.push_back(wrap(-i));
+            padding(temp_roots, 3);
+            clause tmp(temp_roots, 3);
+            tmp.poly.Equal(skolem_vars_CR->get(index).poly);
+        }
+    }
     for (int i = 0; i < ncls - nres; i++) {
         if (i < (3*(num_ins+num_ands))) {
             if (i % 3 == 0){

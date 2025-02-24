@@ -5,6 +5,7 @@ from math import floor
 
 truth_var = 0
 max_var = 0
+quantifier_lines = []
 
 @dataclass
 class AIGERline:
@@ -30,10 +31,14 @@ def parse(aigfile):
     counter = 1
     global truth_var
     global max_var
+    global quantifier_lines
 
     for str in Lines:
         line = str.split(" ")
-        if len(line) == 3:
+        if (line[0] == "a") or (line[0] == "e"):
+            quantifier_lines.append(str[:-1])
+            continue
+        elif len(line) == 3:
             support = []
             support.append(int(line[1]))
             support.append(int(line[2]))
@@ -45,13 +50,24 @@ def parse(aigfile):
     
     return clauses
 
-
-skofile = sys.argv[1]
-qbf_aigfile = sys.argv[2]
-clauses = parse(skofile)
-clauses.extend(parse(qbf_aigfile))
-print("p cnf", int(truth_var/2), (len(clauses)*3)+2)
-for clause in clauses:
-    clause.print()
-print(int(truth_var/2), 0)
-print(-int((max_var)/2), 0)
+if sys.argv[1] == "--zkskoval-input":
+    qbf_aigfile = sys.argv[2]
+    clauses = parse(qbf_aigfile)
+    print("Original-Quantifiers:")
+    for line in quantifier_lines:
+        print(line)
+    print("Formula-for-negQBF:")
+    for clause in clauses:
+        clause.print()
+    print(int(truth_var/2), 0)
+    print(-int((max_var)/2), 0)
+else:
+    skofile = sys.argv[1]
+    qbf_aigfile = sys.argv[2]
+    clauses = parse(skofile)
+    clauses.extend(parse(qbf_aigfile))
+    print("p cnf", int(truth_var/2), (len(clauses)*3)+2)
+    for clause in clauses:
+        clause.print()
+    print(int(truth_var/2), 0)
+    print(-int((max_var)/2), 0)

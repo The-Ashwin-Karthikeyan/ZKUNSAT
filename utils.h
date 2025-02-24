@@ -11,6 +11,7 @@
 #pragma  once
 
 #include "commons.h"
+#include <map>
 
 using namespace  std;
 using  namespace  NTL;
@@ -361,7 +362,7 @@ inline void readproof(string filename, int& d, vector<CLS>& clauses, vector<SPT>
     }
 }
 
-inline void readskolem(string filename, vector<CLS>& vars, vector<int64_t>& dependencies, vector<SPT>& skolem_supports, int& num_ands, int& num_ins, int& num_outs, int& max_var) {
+inline void readskolem(string filename, vector<CLS>& vars, vector<int64_t>& dependencies, vector<SPT>& skolem_supports, int& num_ands, int& num_ins, int& num_outs, int& max_var, std::map <uint64_t, uint64_t>& var_to_index) {
     std::ifstream file(filename);
     std::string str;
     num_ands = 0;
@@ -369,6 +370,7 @@ inline void readskolem(string filename, vector<CLS>& vars, vector<int64_t>& depe
     num_outs = 0;
     vector<int> inputs;
     vector<int> outputs;
+    uint64_t counter = 0;
 
     while (std::getline(file, str)) {
         istringstream ss(str);
@@ -381,6 +383,8 @@ inline void readskolem(string filename, vector<CLS>& vars, vector<int64_t>& depe
                 var.push_back(i);
                 var.push_back(-i);
                 vars.push_back(var);
+                var_to_index[abs(i)] = counter;
+                counter++; 
             }
             if (word == "support:") {
                 SPT support;
@@ -412,6 +416,10 @@ inline void readskolem(string filename, vector<CLS>& vars, vector<int64_t>& depe
             }
         }
     }
+}
+
+inline void readnegqbf(string filename, vector<uint64_t>& e_vars, vector<uint64_t>& a_vars, vector<CLS>& negqbf_clauses) {
+    
 }
 
 #endif //ZKUNSAT_NEW_UTILS_H
