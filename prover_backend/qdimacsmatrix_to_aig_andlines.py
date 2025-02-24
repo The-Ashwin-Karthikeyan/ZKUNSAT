@@ -38,7 +38,9 @@ def parse(qbffile) -> array[QBFClause]:
 
     for str in Lines:
         line = str.split(" ")
-        if (line[0] == "p") or (line[0] == "a") or (line[0] == "e") or (line[0] == "c"):
+        if (line[0] == "a" or line[0] == "e"):
+            print(str[:-1]) #This should just be the '\n' character
+        elif (line[0] == "p") or (line[0] == "c"):
             continue
         else:
             qbf_matrix.append(read_qbf_line(line))
