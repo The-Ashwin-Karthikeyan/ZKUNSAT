@@ -419,7 +419,47 @@ inline void readskolem(string filename, vector<CLS>& vars, vector<int64_t>& depe
 }
 
 inline void readnegqbf(string filename, vector<uint64_t>& e_vars, vector<uint64_t>& a_vars, vector<CLS>& negqbf_clauses) {
-    
+    std::ifstream file(filename);
+    std::string str;
+    vector<int> inputs;
+    vector<int> outputs;
+    bool start_reading_clauses = false;
+
+    while (std::getline(file, str)) {
+        istringstream ss(str);
+        string word;
+        while (ss >> word) {
+            if (word == "a") {
+                ss >> word;
+                while (word != "0") {
+                    int i = stoi(word);
+                    a_vars.push_back(i);
+                    ss >> word; 
+                }
+            }
+            if (word == "e") {
+                ss >> word;
+                while (word != "0") {
+                    int i = stoi(word);
+                    e_vars.push_back(i);
+                    ss >> word; 
+                }
+            }
+            if (word == "Formula-for-negQBF:") {
+                start_reading_clauses = true; 
+                continue;
+            }
+            if (start_reading_clauses) {
+                CLS clause;
+                while (word != "0") {
+                    int i = stoi(word);
+                    clause.push_back(i);
+                    ss >> word;
+                }
+                negqbf_clauses.push_back(clause);
+            }
+        }
+    }
 }
 
 #endif //ZKUNSAT_NEW_UTILS_H

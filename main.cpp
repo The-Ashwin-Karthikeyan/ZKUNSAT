@@ -194,28 +194,49 @@ int main(int argc, char **argv) {
 
     delta = 0;
 
-    for (int i = 1; i <= num_ins + num_ands; i++) {
-        if (i < num_ins){
-            Integer index = Integer(INDEX_SZ, var_to_index[i], ALICE);
-            vector<uint64_t> temp_roots;
-            temp_roots.push_back(wrap(i));
-            temp_roots.push_back(wrap(-i));
-            padding(temp_roots, 3);
-            clause tmp(temp_roots, 3);
-            tmp.poly.Equal(skolem_vars_CR->get(index).poly);
+    // This loop checks
+    // 1) That the input variable are the forall variables in the QBF.
+    // 2) That each variable 0 < v < num_ins+num_ands is assigned only 
+    // once in the AIGER.
+    // This is sufficient to say no forall variable is constrained by the 
+    // AIGER.
+    for (int i = 0; i < num_ins+num_ands; i++) {
+        if (i < num_ins) {
+            vector<uint64_t> temp_variable;
+            temp_variable.push_back(wrap(a_vars[i]));
+            temp_variable.push_back(wrap(-a_vars[i]));
+            padding(temp_variable, 3);
+            clause temp_var_clause(temp_variable, 3);
+            Integer index = Integer(INDEX_SZ, i, PUBLIC);
+            temp_var_clause.poly.Equal(skolem_vars_CR->get(index).poly);
         }
+        vector<uint64_t> temp_variable;
+        temp_variable.push_back(wrap(i+1));
+        temp_variable.push_back(wrap(-i-1));
+        padding(temp_variable, 3);
+        clause temp_var_clause(temp_variable, 3);
+        Integer index = Integer(INDEX_SZ, var_to_index[i+1], ALICE);
+        // The check below is probably not necessary because both parties know the size of 
+        // skolem_vars_CR = num_ins+num_ands
+        // if (index.geq(Integer(INDEX_SZ, num_ins+num_ands, PUBLIC)).reveal())
+        //     error("skolem function incorrect");
+        temp_var_clause.poly.Equal(skolem_vars_CR->get(index).poly);
     }
+
+    // This loop checks that the input clauses in the resolution proof were derived from the 
+    // Skolem function's AIGER and the initial QBF's matrix' negated CNF formula.
     for (int i = 0; i < ncls - nres; i++) {
-        if (i < (3*(num_ins+num_ands))) {
+        if (i < (3*(num_ands))) {
             if (i % 3 == 0){
-                skolem_vars_CR->get(Integer(INDEX_SZ, int(i/3), PUBLIC));
-        
-                SPT s = skolem_supports[int(i/3)];
+                skolem_vars_CR->get(Integer(INDEX_SZ, num_ins+ int(i/3), PUBLIC));        
+                SPT s = skolem_supports[num_ins+int(i/3)];
         
                 if (party == BOB) {        
                     s.push_back(0L);
                     s.push_back(0L);
                 }
+
+                assert(s.size() == 2);
 
             }
         }
@@ -286,6 +307,8 @@ int main(int argc, char **argv) {
     auto timer_4 = chrono::high_resolution_clock::now();
 
     formula->check();
+    dependencies_ROZKRAM->check();
+    skolem_vars_CR->check();
 
     auto timer_5 = chrono::high_resolution_clock::now();
     cost_access = cost_access +  chrono::duration<double>(timer_5 - timer_4).count();
