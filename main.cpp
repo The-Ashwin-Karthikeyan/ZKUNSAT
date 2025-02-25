@@ -120,7 +120,9 @@ int main(int argc, char **argv) {
         io->send_data(&nres, 4);
         io->send_data(&ncls, 4);
         io->send_data(&DEGREE, 4);
-
+        for (int i = 0; i < supports.size(); i++) {
+            cout << i+1 << " " << supports[i].size() << endl;
+        }
     }
 
     if (party == BOB) {
@@ -259,16 +261,16 @@ int main(int argc, char **argv) {
             if (i % 3 == 0){
                 Integer ind = Integer(INDEX_SZ, 1+num_ins+ int(i/3), PUBLIC);
                 skolem_vars_CR->get(ind);   
-                SPT s = skolem_supports[1 + num_ins+ int(i/3)];
+                SPT dep_s = skolem_supports[1 + num_ins+ int(i/3)];
                 if (party == BOB) {
-                    s.push_back(0L);
-                    s.push_back(0L);
+                    dep_s.push_back(0L);
+                    dep_s.push_back(0L);
                 }
                 // Check that the dependencies listed in the skolem file are valid.
                 // i.e. dep(out) >= dep(in1) and dep(in2) 
                 Integer dependency_of_out_var = dependencies_ROZKRAM->read(ind);
-                Integer dependency_of_in1 = dependencies_ROZKRAM->read(Integer(INDEX_SZ, abs(s[0])-1, ALICE));
-                Integer dependency_of_in2 = dependencies_ROZKRAM->read(Integer(INDEX_SZ, abs(s[1])-1, ALICE));
+                Integer dependency_of_in1 = dependencies_ROZKRAM->read(Integer(INDEX_SZ, abs(dep_s[0])-1, ALICE));
+                Integer dependency_of_in2 = dependencies_ROZKRAM->read(Integer(INDEX_SZ, abs(dep_s[1])-1, ALICE));
                 if (!(dependency_of_out_var.geq(dependency_of_in1).reveal())) error ("dependency issue in skolem function (intermediate var)");
                 if (!(dependency_of_out_var.geq(dependency_of_in2).reveal())) error ("dependency issue in skolem function (intermediate var)");     
                 CLS out_raw = sko_vars[1 + num_ins + int(i/3)];
@@ -295,25 +297,25 @@ int main(int argc, char **argv) {
                 vector <uint64_t> root_neginp1;
                 vector <uint64_t> root_inp2;
                 vector <uint64_t> root_neginp2;
-                if (s.size() == 2) {
-                    if (s[0] < 0) {
-                        root_inp1.push_back(wrap(-abs(sko_vars[abs(s[0])-1][0])));
-                        root_neginp1.push_back(wrap(abs(sko_vars[abs(s[0])-1][0])));
+                if (dep_s.size() == 2) {
+                    if (dep_s[0] < 0) {
+                        root_inp1.push_back(wrap(-abs(sko_vars[abs(dep_s[0])-1][0])));
+                        root_neginp1.push_back(wrap(abs(sko_vars[abs(dep_s[0])-1][0])));
                     }
-                    else if (s[0] > 0){
-                        root_inp1.push_back(wrap(abs(sko_vars[abs(s[0])-1][0])));
-                        root_neginp1.push_back(wrap(-abs(sko_vars[abs(s[0])-1][0])));
+                    else if (dep_s[0] > 0){
+                        root_inp1.push_back(wrap(abs(sko_vars[abs(dep_s[0])-1][0])));
+                        root_neginp1.push_back(wrap(-abs(sko_vars[abs(dep_s[0])-1][0])));
                     }
-                    if (s[1] < 0) {
-                        root_inp2.push_back(wrap(-abs(sko_vars[abs(s[1])-1][0])));
-                        root_neginp2.push_back(wrap(abs(sko_vars[abs(s[1])-1][0])));
+                    if (dep_s[1] < 0) {
+                        root_inp2.push_back(wrap(-abs(sko_vars[abs(dep_s[1])-1][0])));
+                        root_neginp2.push_back(wrap(abs(sko_vars[abs(dep_s[1])-1][0])));
                     }
-                    else if (s[1] > 0){
-                        root_inp2.push_back(wrap(abs(sko_vars[abs(s[1])-1][0])));
-                        root_neginp2.push_back(wrap(-abs(sko_vars[abs(s[1])-1][0])));
+                    else if (dep_s[1] > 0){
+                        root_inp2.push_back(wrap(abs(sko_vars[abs(dep_s[1])-1][0])));
+                        root_neginp2.push_back(wrap(-abs(sko_vars[abs(dep_s[1])-1][0])));
                     }
                 }
-                else if (s.size() != 0) {
+                else if (dep_s.size() != 0) {
                     error("check skolem AIGER and line");
                 }
                 padding(root_inp1, 3);
@@ -328,7 +330,13 @@ int main(int argc, char **argv) {
                 inp2.poly.ConverseCheck(neginp2.poly);
 
                 // TODO: Check that these polynomials are unit polynomials
-
+                // TODO: Check that the lines i, i+1 and i+2 in the proof file are 
+                //       consistent with the skolem function.
+                clause first = formula->get(Integer(INDEX_SZ, i, PUBLIC));
+                clause second = formula->get(Integer(INDEX_SZ, i+1, PUBLIC));
+                clause third = formula->get(Integer(INDEX_SZ, i+2, PUBLIC));
+                first.poly.ProductEqual(negout.poly, inp1.poly);
+                second.poly.ProductEqual(negout.poly, inp2.poly);
             }
         }
         else {
@@ -385,7 +393,7 @@ int main(int argc, char **argv) {
             }
         }
 
-
+        //cout<<s.size()<< " " << i << endl;
         assert(s.size() == p.size() +1);
         for (uint64_t index: s) {
             chain.push_back(Integer(INDEX_SZ, index, ALICE));
