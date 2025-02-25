@@ -12,6 +12,7 @@
 #include "emp-zk/emp-vole-f2k/base_svole.h"
 
 
+extern int true_var;
 extern SVoleF2k<BoolIO<NetIO>> *svole;
 extern F2kOSTriple<BoolIO<NetIO>>* ostriple;
 extern BoolIO<NetIO>* io;

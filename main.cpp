@@ -7,6 +7,7 @@
 int port, party;
 const int threads = 8;
 int DEGREE = 4;
+int true_var = 0;
 block *mac, *data;
 uint64_t data_mac_pointer;
 SVoleF2k <BoolIO<NetIO>> *svole;
@@ -51,46 +52,15 @@ int main(int argc, char **argv) {
     SetCoeff(P, 0, 1);
     GF2E::init(P);
 
-    int skolem_deg = 0;
-
-    vector <int64_t> dependencies;
-    std::map <uint64_t, uint64_t> var_to_index;
-    vector <CLS> vars;
-    vector <SPT> skolem_supports;
-    int num_ands = 0, num_ins = 0, num_outs = 0, max_var = 0;
-
-    if (party == ALICE) {
-        readskolem(string(skolemfile), vars, dependencies, skolem_supports, num_ands, num_ins, num_outs, max_var, var_to_index);
-        cout << string(skolemfile) << endl;
-        io->send_data(&num_ins, 4);
-        io->send_data(&num_outs, 4);
-        io->send_data(&num_ands, 4);
-        assert(var_to_index.size() == num_ins+num_ands);
-    }
-    if (party == BOB) {
-        io->recv_data(&num_ins, 4);
-        io->recv_data(&num_outs, 4);
-        io->recv_data(&num_ands, 4);
-        dependencies = vector<int64_t>(num_ins+num_ands);
-        vars = vector<CLS>(num_ins+num_ands);
-        skolem_supports = vector<SPT>(num_ins+num_ands);
-        for (int i = 1; i <= num_ins+num_ands; i++) {
-            var_to_index[i] = 0;
-        }
-    }
-    cout << "----Skolem Function----" << endl;
-    cout << "number of input variables: " << num_ins << endl;
-    cout << "number of output variables: " << num_outs << endl;
-    cout << "number of and gates: " << num_ands << endl << endl;
-
     // This section is to get the negated matrix from both the prover and the verifier
     // So it assumes that the qbf is public. A private qbf version may be in a different branch
     vector <uint64_t> e_vars;
     vector <uint64_t> a_vars;
     vector <CLS> negqbf_clauses;
     vector <uint64_t> max_dep_for_e_vars;
+    vector <uint64_t> dep_for_a_vars;
 
-    readnegqbf(string(negqbffile), e_vars, a_vars, negqbf_clauses, max_dep_for_e_vars);
+    readnegqbf(string(negqbffile), e_vars, a_vars, negqbf_clauses, max_dep_for_e_vars, dep_for_a_vars);
     
     cout << "----Negative matrix----" << endl;
     cout << "number of forall variables: " << a_vars.size() << endl;
@@ -98,7 +68,47 @@ int main(int argc, char **argv) {
     cout << "number of clauses: " << negqbf_clauses.size() << endl << endl;
 
     int ncls = 0, nres = 0;
+    assert(negqbf_clauses[negqbf_clauses.size()-2].size() == 1);
+    true_var = negqbf_clauses[negqbf_clauses.size()-2][0];
+    cout << "Variable representing true: " << true_var << endl << endl;
     // This is the end of the aforementioned public qbf reading section.
+
+    // This section is to read the prover-private skolem function.
+    // It assumes that there are no latches in the AIGER file.
+    int skolem_deg = 0;
+
+    vector <int64_t> dependencies;
+    std::map <uint64_t, uint64_t> var_to_index;
+    var_to_index[true_var] = 0;
+    vector <CLS> sko_vars;
+    vector <SPT> skolem_supports;
+    int num_ands = 0, num_ins = 0, num_outs = 0, max_var = 0;
+
+    if (party == ALICE) {
+        readskolem(string(skolemfile), sko_vars, dependencies, skolem_supports, num_ands, num_ins, num_outs, max_var, var_to_index);
+        cout << string(skolemfile) << endl;
+        io->send_data(&num_ins, 4);
+        io->send_data(&num_outs, 4);
+        io->send_data(&num_ands, 4);
+        assert(var_to_index.size() == num_ins+num_ands+1);
+    }
+    if (party == BOB) {
+        io->recv_data(&num_ins, 4);
+        io->recv_data(&num_outs, 4);
+        io->recv_data(&num_ands, 4);
+        dependencies = vector<int64_t>(1+num_ins+num_ands);
+        sko_vars = vector<CLS>(1+num_ins+num_ands);
+        skolem_supports = vector<SPT>(1+num_ins+num_ands);
+        for (int i = 1; i <= num_ins+num_ands; i++) {
+            var_to_index[i] = 0;
+        }
+        assert(var_to_index.size() == num_ins+num_ands+1);
+    }
+    cout << "----Skolem Function----" << endl;
+    cout << "number of input variables: " << num_ins << endl;
+    cout << "number of output variables: " << num_outs << endl;
+    cout << "number of and gates: " << num_ands << endl << endl;
+    // This is the end of the aforementioned private skolem reading section.
 
     vector <CLS> clauses;
     vector <SPT> supports;
@@ -141,19 +151,19 @@ int main(int argc, char **argv) {
     vector<clause> raw_formula;
 
     vector<Integer> pvt_deps;
-    vector<clause> variables;
-    for (int i = 0; i < num_ands+num_ins; i++) {
+    vector<clause> skolem_variables;
+    for (int i = 0; i < num_ands+num_ins+1; i++) {
         pvt_deps.push_back(Integer(INDEX_SZ, dependencies[i], ALICE));
         vector<uint64_t> variable;
-        for (int64_t lit: vars[i]){
+        for (int64_t lit: sko_vars[i]){
             variable.push_back(wrap(lit));
         }
         padding(variable, 3);
         clause tmp(variable, 3);
-        variables.push_back(tmp);
+        skolem_variables.push_back(tmp);
     }
     clauseRAM<BoolIO<NetIO>>* skolem_vars_CR = new clauseRAM<BoolIO<NetIO>>(party, INDEX_SZ, 3);
-    skolem_vars_CR->init(variables);
+    skolem_vars_CR->init(skolem_variables);
     ROZKRAM<BoolIO<NetIO>>* dependencies_ROZKRAM = new ROZKRAM<BoolIO<NetIO>>(party, INDEX_SZ, INDEX_SZ);
     dependencies_ROZKRAM->init(pvt_deps);
 
@@ -196,54 +206,114 @@ int main(int argc, char **argv) {
     delta = 0;
 
     // This loop checks
-    // 1) That the input variable are the forall variables in the QBF.
-    // 2) That each variable 0 < v < num_ins+num_ands is assigned only 
-    // once in the AIGER.
+    // 1) That the first variable in the skolem_vars_CR is the true variable.
+    // 2) That the next num_ins variables in the skolem_vars_CR 
+    //    are the input variables and are equal to the forall variables in the QBF.
+    // 3) That each variable 0 < v <= num_ins+num_ands is assigned only 
+    //    once in the AIGER.
     // This is sufficient to say no forall variable is constrained by the 
     // AIGER.
-    for (int i = 0; i < num_ins+num_ands; i++) {
-        if (i < num_ins) {
+    // 4) The dependencies of the a_vars are correct.
+    for (int i = 0; i < num_ins+num_ands+1; i++) {
+        if (i == 0) {
+            vector<uint64_t> temp_true_var;
+            temp_true_var.push_back(wrap(true_var));
+            temp_true_var.push_back(wrap(-true_var));
+            padding(temp_true_var, 3);
+            clause temp_true_var_clause(temp_true_var, 3);
+            temp_true_var_clause.poly.Equal(skolem_vars_CR->get(Integer(INDEX_SZ, 0, PUBLIC)).poly);
+        }
+        else if (i < num_ins+1) {
             vector<uint64_t> temp_variable;
-            temp_variable.push_back(wrap(a_vars[i]));
-            temp_variable.push_back(wrap(-a_vars[i]));
+            temp_variable.push_back(wrap(a_vars[i-1]));
+            temp_variable.push_back(wrap(-a_vars[i-1]));
             padding(temp_variable, 3);
             clause temp_var_clause(temp_variable, 3);
             Integer index = Integer(INDEX_SZ, i, PUBLIC);
             temp_var_clause.poly.Equal(skolem_vars_CR->get(index).poly);
+            // Check the dependencies for the a_vars
+            Integer tmp_dep = Integer(INDEX_SZ, dep_for_a_vars[i-1], PUBLIC);
+            if (!(tmp_dep.equal(dependencies_ROZKRAM->read(index)).reveal()))
+                error("dependency issue in skolem function (a_vars)");
         }
-        vector<uint64_t> temp_variable;
-        temp_variable.push_back(wrap(i+1));
-        temp_variable.push_back(wrap(-i-1));
-        padding(temp_variable, 3);
-        clause temp_var_clause(temp_variable, 3);
-        Integer index = Integer(INDEX_SZ, var_to_index[i+1], ALICE);
-        // The check below is probably not necessary because both parties know the size of 
-        // skolem_vars_CR = num_ins+num_ands
-        // if (index.geq(Integer(INDEX_SZ, num_ins+num_ands, PUBLIC)).reveal())
-        //     error("skolem function incorrect");
-        temp_var_clause.poly.Equal(skolem_vars_CR->get(index).poly);
+        if (i < num_ins+num_ands) {
+            vector<uint64_t> temp_variable;
+            temp_variable.push_back(wrap(i+1));
+            temp_variable.push_back(wrap(-i-1));
+            padding(temp_variable, 3);
+            clause temp_var_clause(temp_variable, 3);
+            Integer index = Integer(INDEX_SZ, var_to_index[i+1], ALICE);
+            // The check below is probably not necessary because both parties know the size of 
+            // skolem_vars_CR = 1+num_ins+num_ands
+            // if (index.geq(Integer(INDEX_SZ, num_ins+num_ands, PUBLIC)).reveal())
+            //     error("skolem function incorrect");
+            temp_var_clause.poly.Equal(skolem_vars_CR->get(index).poly);
+        }
     }
 
     // This loop checks that the input clauses in the resolution proof were derived from the 
     // Skolem function's AIGER and the initial QBF's matrix' negated CNF formula.
+    // It also ensure that the dependencies of the variables that are not a_vars is valid.
     for (int i = 0; i < ncls - nres; i++) {
         if (i < (3*(num_ands))) {
             if (i % 3 == 0){
-                skolem_vars_CR->get(Integer(INDEX_SZ, num_ins+ int(i/3), PUBLIC));        
-                SPT s = skolem_supports[num_ins+int(i/3)];
-        
-                if (party == BOB) {        
-                    s.push_back(0L);
-                    s.push_back(0L);
+                skolem_vars_CR->get(Integer(INDEX_SZ, 1+num_ins+ int(i/3), PUBLIC));        
+                SPT s = skolem_supports[1 + num_ins+int(i/3)];
+                CLS out_raw = sko_vars[1 + num_ins + int(i/3)];
+                vector <uint64_t> root_out;
+                vector <uint64_t> root_negout;
+                if (out_raw.size() != 0) {
+                    root_out.push_back(wrap(abs(out_raw[0])));
+                    root_negout.push_back(wrap(-abs(out_raw[0])));
                 }
+                padding(root_out, 3);
+                padding(root_negout, 3);
+                clause out(root_out, 3);
+                clause negout(root_negout, 3);
+                out.poly.ConverseCheck(negout.poly);
+                vector <uint64_t> root_inp1;
+                vector <uint64_t> root_neginp1;
+                vector <uint64_t> root_inp2;
+                vector <uint64_t> root_neginp2;
+                if (s.size() == 2) {
+                    for (int j = 0; j < 2; j++) {
+                        if (s[j] < 0) {
 
-                assert(s.size() == 2);
+                        }
+                        else {
+                            
+                        }
+                    }
+                }
+                else if (s.size() != 0) {
+                    error("check skolem AIGER and line");
+                }
+                padding(root_inp1, 3);
+                padding(root_neginp1, 3);
+                clause inp1(root_inp1, 3);
+                clause neginp1(root_neginp1, 3);
+                inp1.poly.ConverseCheck(neginp1.poly);
+                padding(root_inp2, 3);
+                padding(root_neginp2, 3);
+                clause inp2(root_inp2, 3);
+                clause neginp2(root_neginp2, 3);
+                inp2.poly.ConverseCheck(neginp2.poly);
+
+                // TODO: Check that these polynomials are unit polynomials
 
             }
         }
         else {
             //VERIFY THE REST OF THE INPUT CNF FOR ZKUNSAT WITH VERIFIER'S COPY OF !QBF
         }
+    }
+
+    // This loop checks that the dependencies of the e_vars is valid
+    for (int i = 0; i < e_vars.size(); i++) {
+        Integer tmp_dep = Integer(INDEX_SZ, max_dep_for_e_vars[i], PUBLIC);
+        Integer index = Integer(INDEX_SZ, var_to_index[e_vars[i]], ALICE);
+        if (!(tmp_dep.geq(dependencies_ROZKRAM->read(index)).reveal()))
+            error("dependency issue in skolem function (e_vars)");
     }
 
     for (int64_t i = ncls - nres; i < ncls; i++) {

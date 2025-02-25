@@ -372,6 +372,16 @@ inline void readskolem(string filename, vector<CLS>& vars, vector<int64_t>& depe
     vector<int> outputs;
     uint64_t counter = 0;
 
+    CLS t_var;
+    t_var.push_back(true_var);
+    t_var.push_back(-true_var);
+    vars.push_back(t_var);
+    counter++;
+
+    SPT t_support;
+    skolem_supports.push_back(t_support);
+    dependencies.push_back(0);
+
     while (std::getline(file, str)) {
         istringstream ss(str);
         string word;
@@ -390,9 +400,21 @@ inline void readskolem(string filename, vector<CLS>& vars, vector<int64_t>& depe
                 SPT support;
                 ss >> word;
                 while (word != "dep:") {
-                    int i = stoi(word);
-                    support.push_back(i);
-                    ss >> word;
+                    if (word == "0") {
+                        support.push_back(-1);
+                        ss >> word;
+                    }
+                    else if (word == "-0") {
+                        support.push_back(1);
+                        ss >> word;
+                    }
+                    else {
+                        int i = stoi(word);
+                        if (i < 0) i--;
+                        if (i > 0) i++;
+                        support.push_back(i);
+                        ss >> word;
+                    }
                 }
                 if (support.size() == 0) {
                     num_ins++;
@@ -418,7 +440,7 @@ inline void readskolem(string filename, vector<CLS>& vars, vector<int64_t>& depe
     }
 }
 
-inline void readnegqbf(string filename, vector<uint64_t>& e_vars, vector<uint64_t>& a_vars, vector<CLS>& negqbf_clauses, vector<uint64_t> max_dep_for_e_vars) {
+inline void readnegqbf(string filename, vector<uint64_t>& e_vars, vector<uint64_t>& a_vars, vector<CLS>& negqbf_clauses, vector<uint64_t>& max_dep_for_e_vars, vector<uint64_t>& dep_for_a_vars) {
     std::ifstream file(filename);
     std::string str;
     vector<int> inputs;
@@ -431,13 +453,14 @@ inline void readnegqbf(string filename, vector<uint64_t>& e_vars, vector<uint64_
         string word;
         while (ss >> word) {
             if (word == "a") {
+                forall_level++;
                 ss >> word;
                 while (word != "0") {
                     int i = stoi(word);
                     a_vars.push_back(i);
+                    dep_for_a_vars.push_back(forall_level);
                     ss >> word; 
                 }
-                forall_level++;
             }
             if (word == "e") {
                 ss >> word;
