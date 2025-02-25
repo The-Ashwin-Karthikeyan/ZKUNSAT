@@ -257,8 +257,20 @@ int main(int argc, char **argv) {
     for (int i = 0; i < ncls - nres; i++) {
         if (i < (3*(num_ands))) {
             if (i % 3 == 0){
-                skolem_vars_CR->get(Integer(INDEX_SZ, 1+num_ins+ int(i/3), PUBLIC));        
+                Integer ind = Integer(INDEX_SZ, 1+num_ins+ int(i/3), PUBLIC);
+                skolem_vars_CR->get(ind);   
                 SPT s = skolem_supports[1 + num_ins+ int(i/3)];
+                if (party == BOB) {
+                    s.push_back(0L);
+                    s.push_back(0L);
+                }
+                // Check that the dependencies listed in the skolem file are valid.
+                // i.e. dep(out) >= dep(in1) and dep(in2) 
+                Integer dependency_of_out_var = dependencies_ROZKRAM->read(ind);
+                Integer dependency_of_in1 = dependencies_ROZKRAM->read(Integer(INDEX_SZ, abs(s[0])-1, ALICE));
+                Integer dependency_of_in2 = dependencies_ROZKRAM->read(Integer(INDEX_SZ, abs(s[1])-1, ALICE));
+                if (!(dependency_of_out_var.geq(dependency_of_in1).reveal())) error ("dependency issue in skolem function (intermediate var)");
+                if (!(dependency_of_out_var.geq(dependency_of_in2).reveal())) error ("dependency issue in skolem function (intermediate var)");     
                 CLS out_raw = sko_vars[1 + num_ins + int(i/3)];
                 
                 // A lot of variables are coming up, so here's the jist
@@ -288,7 +300,7 @@ int main(int argc, char **argv) {
                         root_inp1.push_back(wrap(-abs(sko_vars[abs(s[0])-1][0])));
                         root_neginp1.push_back(wrap(abs(sko_vars[abs(s[0])-1][0])));
                     }
-                    else {
+                    else if (s[0] > 0){
                         root_inp1.push_back(wrap(abs(sko_vars[abs(s[0])-1][0])));
                         root_neginp1.push_back(wrap(-abs(sko_vars[abs(s[0])-1][0])));
                     }
@@ -296,7 +308,7 @@ int main(int argc, char **argv) {
                         root_inp2.push_back(wrap(-abs(sko_vars[abs(s[1])-1][0])));
                         root_neginp2.push_back(wrap(abs(sko_vars[abs(s[1])-1][0])));
                     }
-                    else {
+                    else if (s[1] > 0){
                         root_inp2.push_back(wrap(abs(sko_vars[abs(s[1])-1][0])));
                         root_neginp2.push_back(wrap(-abs(sko_vars[abs(s[1])-1][0])));
                     }
