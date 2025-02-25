@@ -245,7 +245,7 @@ int main(int argc, char **argv) {
             Integer index = Integer(INDEX_SZ, var_to_index[i+1], ALICE);
             // The check below is probably not necessary because both parties know the size of 
             // skolem_vars_CR = 1+num_ins+num_ands
-            // if (index.geq(Integer(INDEX_SZ, num_ins+num_ands, PUBLIC)).reveal())
+            // if (index.geq(Integer(INDEX_SZ, 1+num_ins+num_ands, PUBLIC)).reveal())
             //     error("skolem function incorrect");
             temp_var_clause.poly.Equal(skolem_vars_CR->get(index).poly);
         }
@@ -258,8 +258,16 @@ int main(int argc, char **argv) {
         if (i < (3*(num_ands))) {
             if (i % 3 == 0){
                 skolem_vars_CR->get(Integer(INDEX_SZ, 1+num_ins+ int(i/3), PUBLIC));        
-                SPT s = skolem_supports[1 + num_ins+int(i/3)];
+                SPT s = skolem_supports[1 + num_ins+ int(i/3)];
                 CLS out_raw = sko_vars[1 + num_ins + int(i/3)];
+                
+                // A lot of variables are coming up, so here's the jist
+                // if the aiger line has "a b c", then it is equivalent to
+                // having the clauses "-a b", "-a c" and "a -b -c"
+                // So, "a" should be root_out
+                // "b" should be inp1
+                // "c" should be inp2
+                
                 vector <uint64_t> root_out;
                 vector <uint64_t> root_negout;
                 if (out_raw.size() != 0) {
@@ -276,13 +284,21 @@ int main(int argc, char **argv) {
                 vector <uint64_t> root_inp2;
                 vector <uint64_t> root_neginp2;
                 if (s.size() == 2) {
-                    for (int j = 0; j < 2; j++) {
-                        if (s[j] < 0) {
-
-                        }
-                        else {
-                            
-                        }
+                    if (s[0] < 0) {
+                        root_inp1.push_back(wrap(-abs(sko_vars[abs(s[0])-1][0])));
+                        root_neginp1.push_back(wrap(abs(sko_vars[abs(s[0])-1][0])));
+                    }
+                    else {
+                        root_inp1.push_back(wrap(abs(sko_vars[abs(s[0])-1][0])));
+                        root_neginp1.push_back(wrap(-abs(sko_vars[abs(s[0])-1][0])));
+                    }
+                    if (s[1] < 0) {
+                        root_inp2.push_back(wrap(-abs(sko_vars[abs(s[1])-1][0])));
+                        root_neginp2.push_back(wrap(abs(sko_vars[abs(s[1])-1][0])));
+                    }
+                    else {
+                        root_inp2.push_back(wrap(abs(sko_vars[abs(s[1])-1][0])));
+                        root_neginp2.push_back(wrap(-abs(sko_vars[abs(s[1])-1][0])));
                     }
                 }
                 else if (s.size() != 0) {
