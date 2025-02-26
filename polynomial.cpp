@@ -182,36 +182,22 @@ void polynomial::ConverseCheck(polynomial & lhs) {
 /* Check if product of polynomials in p1 = product of polynomials in p2.
 * Assumes each vector has at least one polynomial.
 */
-void polynomial::ProdOfPolysEqual(vector<polynomial> &p1, vector<polynomial> &p2) {
+void polynomial::ProductofThreeEqual(polynomial& p1, polynomial &p2, polynomial &p3) {
     io->flush();
     block r =io->get_hash_block();
-    int d1 = p1.size();
-    block xx, xm, res1, mres1;
-    p1[0].Evaluate(xx, xm, r);
-    if (d1 == 1) {
-        res1 = xx;
-        mres1 = xm;
-    }
-    for (int  i = 1; i < d1; i++){
-        block yy, ym;
-        p1[i].Evaluate(yy, ym, r);
-        ostriple->compute_mul(res1, mres1, xx, xm, yy, ym);
-        xx = res1;
-        xm = mres1;
-    }
-    int d2 = p2.size();
-    block res2, mres2;
-    p2[0].Evaluate(xx, xm, r);
-    if (d2 == 1) {
-        res2 = xx;
-        mres2 = xm;
-    }
-    for (int  i = 1; i < d2; i++){
-        block yy, ym;
-        p2[i].Evaluate(yy, ym, r);
-        ostriple->compute_mul(res2, mres2, xx, xm, yy, ym);
-        xx = res2;
-        xm = mres2;
-    }
-    check_zero_MAC(mres1^mres2);
+    block res = zero_block;
+    block mres = zero_block;
+    block tres = zero_block;
+    block mtres = zero_block;
+    block xx, xm, yy, ym, zz, zm;
+    p1.Evaluate(xx, xm, r);
+    p2.Evaluate(yy, ym, r);
+    p3.Evaluate(zz, zm, r);
+    ostriple->compute_mul(tres, mtres, xx, xm, yy, ym);
+    ostriple->compute_mul(res, mres, tres, mtres, zz, zm);
+    block resp, mresp;
+    this->Evaluate(resp, mresp, r);
+
+    check_zero_MAC(mresp^mres );
+    // cout << " product block: " << (mresp^mres)  << endl; 
 }

@@ -20,7 +20,7 @@ public:
     void Equal(const polynomial& lfh) const;
     void InnerProductEqual(vector<polynomial>& p1, vector<polynomial>& p2);
     void ProductEqual(polynomial& p1, polynomial& p2);
-    void ProdOfPolysEqual(vector<polynomial> &p1, vector<polynomial> &p2);
+    void ProductofThreeEqual(polynomial& p1, polynomial& p2, polynomial& p3);
     void ConverseCheck(polynomial& lhs);
 
     void print() {

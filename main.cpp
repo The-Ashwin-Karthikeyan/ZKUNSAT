@@ -120,9 +120,6 @@ int main(int argc, char **argv) {
         io->send_data(&nres, 4);
         io->send_data(&ncls, 4);
         io->send_data(&DEGREE, 4);
-        for (int i = 0; i < supports.size(); i++) {
-            cout << i+1 << " " << supports[i].size() << endl;
-        }
     }
 
     if (party == BOB) {
@@ -260,7 +257,7 @@ int main(int argc, char **argv) {
         if (i < (3*(num_ands))) {
             if (i % 3 == 0){
                 Integer ind = Integer(INDEX_SZ, 1+num_ins+ int(i/3), PUBLIC);
-                skolem_vars_CR->get(ind);   
+                clause out_skolem_var = skolem_vars_CR->get(ind);   
                 SPT dep_s = skolem_supports[1 + num_ins+ int(i/3)];
                 if (party == BOB) {
                     dep_s.push_back(0L);
@@ -337,6 +334,14 @@ int main(int argc, char **argv) {
                 clause third = formula->get(Integer(INDEX_SZ, i+2, PUBLIC));
                 first.poly.ProductEqual(negout.poly, inp1.poly);
                 second.poly.ProductEqual(negout.poly, inp2.poly);
+                third.poly.ProductofThreeEqual(out.poly, neginp1.poly, neginp2.poly);
+
+                // Check the committed polynomials are consistent with the skolem file
+                clause inp1_skolem_var = skolem_vars_CR->get(Integer(INDEX_SZ, abs(dep_s[0]) - 1, ALICE));
+                clause inp2_skolem_var = skolem_vars_CR->get(Integer(INDEX_SZ, abs(dep_s[1]) - 1, ALICE));
+                inp1_skolem_var.poly.ProductEqual(inp1.poly, neginp1.poly);
+                inp2_skolem_var.poly.ProductEqual(inp2.poly, neginp2.poly);
+                out_skolem_var.poly.ProductEqual(out.poly, negout.poly);
             }
         }
         else {
