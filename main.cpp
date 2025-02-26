@@ -334,7 +334,38 @@ int main(int argc, char **argv) {
                 clause third = formula->get(Integer(INDEX_SZ, i+2, PUBLIC));
                 first.poly.ProductEqual(negout.poly, inp1.poly);
                 second.poly.ProductEqual(negout.poly, inp2.poly);
-                third.poly.ProductofThreeEqual(out.poly, neginp1.poly, neginp2.poly);
+
+                // This section checks that the clause (out v neginp2 v neginp1) is a subclause
+                // of the clause i+2 in the prooffile.
+                // This is sufficient because having a super-clause C' of C instead of C would preserve
+                // The satisfiability of the formula (whatever assignment satisfied C, satisfies C'). 
+                vector <uint64_t> witness_for_neginp1_roots;
+                vector <uint64_t> witness_for_neginp2_roots;
+                vector <uint64_t> witness_for_out_roots;
+                if (party == ALICE) {
+                    if (root_inp1[0] == root_inp2[0]) {
+                        witness_for_out_roots.push_back(root_neginp1[0]);
+                        witness_for_neginp1_roots.push_back(root_out[0]);
+                        witness_for_neginp2_roots.push_back(root_out[0]);
+                    }
+                    else {
+                        witness_for_out_roots.push_back(root_neginp1[0]);
+                        witness_for_out_roots.push_back(root_neginp2[0]);
+                        witness_for_neginp1_roots.push_back(root_out[0]);
+                        witness_for_neginp1_roots.push_back(root_neginp2[0]);
+                        witness_for_neginp2_roots.push_back(root_out[0]);
+                        witness_for_neginp2_roots.push_back(root_neginp1[0]);
+                    }
+                }
+                padding(witness_for_neginp1_roots, 3);
+                padding(witness_for_neginp2_roots, 3);
+                padding(witness_for_out_roots, 3);
+                clause witness_for_neginp1(witness_for_neginp1_roots, 3);
+                clause witness_for_neginp2(witness_for_neginp2_roots, 3);
+                clause witness_for_out(witness_for_out_roots, 3);
+                third.poly.ProductEqual(witness_for_neginp1.poly, neginp1.poly); // Shows neginp1 is in third
+                third.poly.ProductEqual(witness_for_neginp2.poly, neginp2.poly); // Shows neginp2 is in third
+                third.poly.ProductEqual(witness_for_out.poly, out.poly); // Shows out is in third
 
                 // Check the committed polynomials are consistent with the skolem file
                 clause inp1_skolem_var = skolem_vars_CR->get(Integer(INDEX_SZ, abs(dep_s[0]) - 1, ALICE));
@@ -346,6 +377,15 @@ int main(int argc, char **argv) {
         }
         else {
             //VERIFY THE REST OF THE INPUT CNF FOR ZKUNSAT WITH VERIFIER'S COPY OF !QBF
+            int j = i - (3*num_ands);
+            vector<uint64_t> tmp_clause_lits;
+            for (auto lit: negqbf_clauses[j]) {
+                tmp_clause_lits.push_back(wrap(lit));
+            }
+            padding(tmp_clause_lits, DEGREE);
+            clause tmp_clause(tmp_clause_lits, DEGREE);
+            clause tmp_clause_from_formula = formula->get(Integer(INDEX_SZ, i, PUBLIC));
+            tmp_clause.poly.Equal(tmp_clause_from_formula.poly);
         }
     }
 
