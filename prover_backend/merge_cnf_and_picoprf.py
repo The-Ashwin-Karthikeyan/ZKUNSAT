@@ -24,6 +24,6 @@ def merge_files_and_print(proofname, cnfname):
             print(line[:-1])
 
 
-proofname = sys.argv[1]
-cnfname = sys.argv[2]
+proofname = sys.argv[2]
+cnfname = sys.argv[1]
 merge_files_and_print(proofname, cnfname)
