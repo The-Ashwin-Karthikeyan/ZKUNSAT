@@ -202,8 +202,7 @@ int main(int argc, char **argv) {
     auto timer_1 = chrono::high_resolution_clock::now();
     cost_input = chrono::duration<double>(timer_1 - timer_0).count();
 
-    delta = 0;
-
+    auto skolem_timer_begin = chrono::high_resolution_clock::now();
     // This loop checks
     // 1) That the first variable in the skolem_vars_CR is the true variable.
     // 2) That the next num_ins variables in the skolem_vars_CR 
@@ -397,6 +396,10 @@ int main(int argc, char **argv) {
             error("dependency issue in skolem function (e_vars)");
     }
 
+    auto skolem_timer_end = chrono::high_resolution_clock::now();
+    auto cost_skolem = chrono::duration<double>(skolem_timer_end - skolem_timer_begin).count();
+
+    delta = 0;
     for (int64_t i = ncls - nres; i < ncls; i++) {
 	    delta = delta + 1;
         if ((delta / nres) > 0.1){
@@ -465,6 +468,7 @@ int main(int argc, char **argv) {
     auto timer_5 = chrono::high_resolution_clock::now();
     cost_access = cost_access +  chrono::duration<double>(timer_5 - timer_4).count();
     cout << "a "<< cost_access << " " << "r " << cost_resolve << " "<< "i "<< cost_input << " t "<< cost_access + cost_resolve + cost_input << endl;
+    cout << "skolem function checking time: " << cost_skolem << endl;
 
 
     bool cheat = finalize_zk_bool<BoolIO<NetIO>>();
