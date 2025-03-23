@@ -50,7 +50,7 @@ def format_certfile_and_print(certfile):
     words = lines[0].split()
     num_and_gates = int(words[5])
     aag_max_var = max_var + num_and_gates
-    print('aag', aag_max_var, len(i_symbols), 0, len(o_symbols), num_and_gates)
+    print('aag', aag_max_var, len(i_symbols), 0, len(o_symbols), num_and_gates+len(o_symbols))
 
     for i in range(1, len(i_symbols)+1):
         line = lines[i]
