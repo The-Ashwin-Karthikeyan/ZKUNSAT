@@ -107,7 +107,10 @@ def format_certfile_and_print(certfile):
             else:
                 inp2 = 1 + original_names_to_new_names[inp2-1]
             if (inp1 == inp2 + 1) or (inp2 == inp1 + 1):
-                print(var, 0, 0)
+                if min(inp1, inp2) % 2 == 0:
+                    print(var, 0, 0)
+                else:
+                    print(var, inp1, inp2)
             else:
                 print(var, inp1, inp2)
             max_var += 1
