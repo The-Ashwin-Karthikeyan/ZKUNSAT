@@ -34,10 +34,16 @@ def get_symbols(certfile):
         words = line.split()
         if len(words) == 2:
             if words[0][0] == 'o':
-                o_symbols[int(words[0][1:])] = words[1]
+                if words[1][0] == 'o':
+                    o_symbols[int(words[0][1:])] = words[1][1:]
+                else:
+                    o_symbols[int(words[0][1:])] = words[1]
                 num_symbols += 1
             elif words[0][0] == 'i':
-                i_symbols[int(words[0][1:])] = words[1]
+                if words[1][0] == 'i':
+                    i_symbols[int(words[0][1:])] = words[1][1:]
+                else:
+                    i_symbols[int(words[0][1:])] = words[1]
                 num_symbols += 1
                 
 def format_certfile_and_print(certfile):
