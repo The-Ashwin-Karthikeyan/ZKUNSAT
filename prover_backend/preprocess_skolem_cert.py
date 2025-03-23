@@ -11,7 +11,10 @@ def format_certfile_and_print(certfile):
             inp1 = int(words[1])
             inp2 = int(words[2])
             if (inp1 == inp2 + 1) or (inp2 == inp1 + 1):
-                print(var, 0, 0)
+                if min(inp1, inp2) % 2 == 0:
+                    print(var, 0, 0)
+                else:
+                    print(line[:-1])
             else:
                 print(line[:-1])
         else:
