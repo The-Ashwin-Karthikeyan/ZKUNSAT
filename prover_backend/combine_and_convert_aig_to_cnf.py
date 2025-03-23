@@ -21,7 +21,10 @@ class AIGERline:
                 self.support[i] = truth_var
         print(-int(self.result/2), int(self.support[0]/2) * (1 if self.support[0]%2 == 0 else -1), 0)
         print(-int(self.result/2), int(self.support[1]/2) * (1 if self.support[1]%2 == 0 else -1), 0)
-        print(int(self.result/2), int(self.support[0]/2) * (-1 if self.support[0]%2 == 0 else 1), int(self.support[1]/2) * (-1 if self.support[1]%2 == 0 else 1), 0)
+        if (self.support[0] == self.support[1]):
+            print(int(self.result/2), int(self.support[0]/2) * (-1 if self.support[0]%2 == 0 else 1), 0)
+        else:
+            print(int(self.result/2), int(self.support[0]/2) * (-1 if self.support[0]%2 == 0 else 1), int(self.support[1]/2) * (-1 if self.support[1]%2 == 0 else 1), 0)
 
 
 def parse(aigfile):

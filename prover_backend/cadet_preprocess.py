@@ -119,7 +119,8 @@ def format_certfile_and_print(certfile):
             inp2 = 1 + original_names_to_new_names[inp2-1]
         if (inp2 == 0): # Because inp1 is always 1
             print(var, 0, 0)
-        print(var, inp1, inp2)
+        else:
+            print(var, inp1, inp2)
 
 # This tool assumes that the input quantified boolean formula (QBF) is in prenex conjunctive normal form (PCNF).
 # The certificate file is from CADET or derived from Manthan.
