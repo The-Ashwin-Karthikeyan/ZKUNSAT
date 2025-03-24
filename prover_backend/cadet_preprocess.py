@@ -99,12 +99,20 @@ def format_certfile_and_print(certfile):
             inp1 = int(words[1])
             inp2 = int(words[2])
             if inp1 % 2 == 0:
+                if inp1 not in original_names_to_new_names.keys():
+                    raise Exception("A variable doesn't depend on the previous variables")
                 inp1 = original_names_to_new_names[inp1]
             else:
+                if inp1-1 not in original_names_to_new_names.keys():
+                    raise Exception("A variable doesn't depend on the previous variables")
                 inp1 = 1 + original_names_to_new_names[inp1-1]
             if inp2 % 2 == 0:
+                if inp2 not in original_names_to_new_names.keys():
+                    raise Exception("A variable doesn't depend on the previous variables")
                 inp2 = original_names_to_new_names[inp2]
             else:
+                if inp2-1 not in original_names_to_new_names.keys():
+                    raise Exception("A variable doesn't depend on the previous variables")
                 inp2 = 1 + original_names_to_new_names[inp2-1]
             if (inp1 == inp2 + 1) or (inp2 == inp1 + 1):
                 if min(inp1, inp2) % 2 == 0:
