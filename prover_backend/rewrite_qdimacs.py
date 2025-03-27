@@ -34,6 +34,7 @@ def rewrite(qdimacs_file, old_names_to_new_names):
             print(*[old_names_to_new_names[int(words[i])] for i in range(0, len(words)-1)], '0')
 
 
+# This code is to rename the variables in the qdimacs file
 qdimacs_file = sys.argv[1]
 old_names_to_new_names = {}
 old_names_to_new_names = get_old_names_to_new_names(qdimacs_file, old_names_to_new_names)
