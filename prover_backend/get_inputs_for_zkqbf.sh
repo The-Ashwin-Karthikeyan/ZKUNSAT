@@ -53,7 +53,7 @@ for dir in $1/*/; do
   timeout 30 $4/abc -c "read $aiger_output; dc2; write $min_aiger_output;"
   timeout 30 $5/./aigtoaig "$min_aiger_output" "$min_aag_output"
   timeout 30 $2/prover_backend/cadet_preprocess.py "$min_aag_output" "$renamed_output" > "$cert_output"
-  max_var=${python3 "$2/prover_backend/get_cert_maxvar.py" "$cert_output"}
+  max_var=$(python3 "$2/prover_backend/get_cert_maxvar.py" "$cert_output")
   timeout 30 $2/prover_backend/qdmiacsmatrix_to_aig_andlines.py "$renamed_output" "$max_var" > "$qma_output"
   timeout 30 $2/prover_backend/combine_and_convert_aig_to_cnf.py "$cert_output" "$qma_output" > "$cnf_output"
 done
