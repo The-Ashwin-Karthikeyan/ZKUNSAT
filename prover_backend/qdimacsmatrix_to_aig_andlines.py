@@ -31,7 +31,7 @@ def read_qbf_line(line):
     return(QBFClause(clause))
 
 
-def parse(qbffile) -> array[QBFClause]:
+def parse(qbffile):
     qbf_matrix = []
     qbf = open(qbffile, 'r')
     Lines = qbf.readlines()
