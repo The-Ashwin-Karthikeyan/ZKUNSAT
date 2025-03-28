@@ -4,7 +4,7 @@
 # runs cadet/./cadet on it
 # with a 30-second timeout. The output is saved to the corresponding .prf file.
 
-if [ "$#" -ne 2 ]; then
+if [ "$#" -ne 5 ]; then
     echo "Usage: $0 <input_dir> <zkqbf_dir> <cadet_dir> <abc_dir> <aiger_dir>"
     echo " (1) <input_dir> should be the path to the directory containing the subdirectories."
     echo "     each subdirectory should contain exactly one file with a .qdimacs extension."
