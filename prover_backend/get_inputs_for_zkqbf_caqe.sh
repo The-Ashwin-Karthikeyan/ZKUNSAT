@@ -44,6 +44,12 @@ for dir in $1/*/; do
   # Run ../depqbf with a 30-second timeout and save the output to the proof file
   timeout 120 python3 $2/prover_backend/rewrite_qdimacs.py "$file" > "$renamed_output"
   timeout 300 $3/./caqe -c "$renamed_output" > "$aag_output"
+  exit_status=$?
+  # Check if the command timed out (exit status 124) or produced no output
+  if [ $exit_status -eq 124 ] || [ ! -s "$aag_output" ]; then
+    echo "caqe timed out or produced no output for $file; skipping to next input."
+    continue  # Skips to the next iteration in the loop
+  fi
   timeout 120 python3 $2/prover_backend/cadet_preprocess.py "$aag_output" "$renamed_output" > "$cert_output"
   max_var=$(python3 "$2/prover_backend/get_cert_maxvar.py" "$cert_output")
   timeout 120 python3 $2/prover_backend/qdimacsmatrix_to_aig_andlines.py "$renamed_output" "$max_var" > "$qma_output"
