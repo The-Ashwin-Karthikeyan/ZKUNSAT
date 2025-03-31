@@ -50,17 +50,17 @@ for dir in $1/*/; do
   cnf_output="$dir$cnffile"
 
   # Run ../depqbf with a 30-second timeout and save the output to the proof file
-  timeout 30 python3 $2/prover_backend/rewrite_qdimacs.py "$file" > "$renamed_output"
-  timeout 120 $3/./caqe -c "$renamed_output" > "$aag_output"
+  timeout 120 python3 $2/prover_backend/rewrite_qdimacs.py "$file" > "$renamed_output"
+  timeout 300 $3/./caqe -c "$renamed_output" > "$aag_output"
   exit_status=$?
   # Check if the command timed out (exit status 124) or produced no output
   if [ $exit_status -eq 124 ] || [ ! -s "$aag_output" ]; then
     echo "caqe timed out or produced no output for $file; skipping to next input."
     continue  # Skips to the next iteration in the loop
   fi
-  timeout 30 $5/./aigtoaig "$aag_output" "$aig_output"
-  timeout 30 $4/abc -c "read $aig_output; strash; dc2; write $min_aiger_output;"
+  timeout 120 $5/./aigtoaig "$aag_output" "$aig_output"
+  timeout 300 $4/abc -c "read $aig_output; strash; dc2; write $min_aiger_output;"
   rm -f "$aig_output"
-  timeout 30 $5/./aigtoaig "$min_aiger_output" "$min_aag_output"
+  timeout 120 $5/./aigtoaig "$min_aiger_output" "$min_aag_output"
   rm -f "$min_aiger_output"
 done
