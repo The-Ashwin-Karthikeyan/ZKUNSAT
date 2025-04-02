@@ -365,6 +365,7 @@ int main(int argc, char **argv) {
                 third.poly.ProductEqual(witness_for_neginp1.poly, neginp1.poly); // Shows neginp1 is in third
                 third.poly.ProductEqual(witness_for_neginp2.poly, neginp2.poly); // Shows neginp2 is in third
                 third.poly.ProductEqual(witness_for_out.poly, out.poly); // Shows out is in third
+                // TODO: Check that third is in out.poly*neginp1.poly*neginp2.poly
 
                 // Check the committed polynomials are consistent with the skolem file
                 clause inp1_skolem_var = skolem_vars_CR->get(Integer(INDEX_SZ, abs(dep_s[0]) - 1, ALICE));
@@ -395,7 +396,7 @@ int main(int argc, char **argv) {
         if (!(tmp_dep.geq(dependencies_ROZKRAM->read(index)).reveal()))
             error("dependency issue in skolem function (e_vars)");
     }
-
+    skolem_vars_CR->check();
     auto skolem_timer_end = chrono::high_resolution_clock::now();
     auto cost_skolem = chrono::duration<double>(skolem_timer_end - skolem_timer_begin).count();
 
