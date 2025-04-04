@@ -5,10 +5,10 @@ if [ "$#" -ne 4 ]; then
     echo "Note: Run \"cmake .\" and \"make\" to build once you have installed the emp-toolkit, emp-zk and NTL libraries."
     echo "Usage: $0 <filename> <max_var> <port_num> <ip_address>"
     echo ""
-    echo "<filename>: Provide the full path or location of the public QBF formula in QDIMACS format as the argument."
-    echo "<max_var>: State the maximum variable in the AIGER file for the certificate as provided by the prover."
-    echo "<port_num>: Port number for the protocol."
-    echo "<ip_address>: IP address for the protocol."
+    echo " - <filename>: Provide the full path or location of the public QBF formula in QDIMACS format as the argument."
+    echo " - <max_var>: State the maximum variable in the AIGER file for the certificate as provided by the prover."
+    echo " - <port_num>: Port number for the protocol."
+    echo " - <ip_address>: IP address for the protocol."
     exit 0
 fi
 
