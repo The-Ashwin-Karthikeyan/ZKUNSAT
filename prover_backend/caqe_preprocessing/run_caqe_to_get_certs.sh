@@ -9,7 +9,7 @@ if [ "$#" -ne 5 ]; then
     echo " (1) <input_dir> should be the path to the directory containing the subdirectories."
     echo "     each subdirectory should contain exactly one file with a .qdimacs extension."
     echo " (2) <zkqbf_dir> should be the path to the zkqbf directory."
-    echo " (3) <caqe_dir> should be the path to the cadet directory."
+    echo " (3) <caqe_dir> should be the path to the caqe directory."
     echo " (4) <abc_dir> should be the path to the abc directory."
     echo " (5) <aiger_dir> should be the path to the aiger (toolset: https://github.com/arminbiere/aiger) directory."
     exit 1
