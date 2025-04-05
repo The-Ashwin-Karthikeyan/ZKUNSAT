@@ -48,9 +48,10 @@ for dir in $1/*/; do
   verifier_input="$dir$verifierinput"
 
   # Run ../depqbf with a 30-second timeout and save the output to the proof file
-  timeout 200 python3 caqe_false_preprocess.py "$file" "$renamed_qdimacs" > "$cert_output"
+  timeout 200 python3 caqe_true_preprocess.py "$file" "$renamed_qdimacs" > "$cert_output"
   max_var=$(python3 "$3/prover_backend/get_cert_maxvar.py" "$cert_output")
-  timeout 200 python3 "$3/prover_backend/combine_herbrand_and_qdimacs.py" "$cert_output" "$renamed_qdimacs" "$max_var" > "$cnf_output"
+  timeout 200 python3 "$3/prover_backend/qdimacsmatrix_to_aig_andlines.py" "$renamed_qdimacs" "$max_var" > "$renamed_qdimacs"
+  timeout 200 python3 "$3/prover_backend/combine_and_convert_aig_to_cnf.py" "$cert_output" "$renamed_qdimacs" "$max_var" > "$cnf_output"
   timeout 30 python3 $3/verifier_backend/qdimacs_preprocess_for_zkherb_verification.py "$renamed_qdimacs" "$max_var" > "$verifier_input"
   timeout 360 $2/./picosat -T "$picoprf_output" "$cnf_output" || true
   timeout 360 python3 $3/prover_backend/merge_cnf_and_picoprf.py "$cnf_output" "$picoprf_output" > "$mergedprf_output"
