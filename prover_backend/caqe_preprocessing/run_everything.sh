@@ -30,17 +30,17 @@ echo "Sorting the benchmarks into true and false..."
 echo "---------------------------------------------------------------------------------------------"
 ./sort_benches_into_true_and_false.sh "$1"
 echo "---------------------------------------------------------------------------------------------"
-echo "Getting the herbrandization for the instances in the False directory, getting picosat proofs,"
-echo " and merging them with the herbrandization..."
+echo "Getting the skolemization for the instances in the True directory, getting picosat proofs,"
+echo " and merging them with the skolemization..."
 echo "---------------------------------------------------------------------------------------------"
-./convert_false_and_pico.sh "$1/False" $6 $2
+./convert_true_and_pico.sh "$1/True" $6 $2
 echo "---------------------------------------------------------------------------------------------"
-echo "All benchmark related files for the False instances shoulld be in the False directory."
+echo "All benchmark related files for the True instances shoulld be in the True directory."
 echo "---------------------------------------------------------------------------------------------"
-echo "Running zkherbrand as prover on the False instances..."
+echo "Running zkskolem-validation as prover on the True instances..."
 echo "---------------------------------------------------------------------------------------------"
-./run_zkherbrand_as_prover.sh "$1/False" $2 $7 $8 &
+./run_zkherbrand_as_prover.sh "$1/True" $2 $7 $8 &
 echo "---------------------------------------------------------------------------------------------"
-echo "Running zkherbrand as verifier on the False instances..."
+echo "Running zkskolem-validation as verifier on the True instances..."
 echo "---------------------------------------------------------------------------------------------"
-./run_zkherbrand_as_verifier.sh "$1/False" $2 $7 $8
+./run_zkherbrand_as_verifier.sh "$1/True" $2 $7 $8

@@ -66,10 +66,10 @@ def format_certfile_and_print(certfile):
             print(2*int(i_symbols[i_var_count]))
             i_var_count += 1
 
-    assert(i_var_count == len(e_vars))
+    assert(i_var_count == len(a_vars))
     o_var_count = 0
 
-    assert(len(o_symbols) == len(a_vars) + 1)
+    assert(len(o_symbols) == len(e_vars) + 1)
 
     for i in range(len(i_symbols)+1, len(i_symbols)+1+len(o_symbols)+1):
         line = lines[i]
@@ -136,7 +136,7 @@ def format_certfile_and_print(certfile):
             print(var, inp1, inp2)
 
 # This tool assumes that the input quantified boolean formula (QBF) is in prenex conjunctive normal form (PCNF).
-# The certificate file is from CADET or derived from Manthan.
+# The certificate file is from CAQE-2.
 # The certificate should not have any comments.
 a_vars = []
 e_vars = []

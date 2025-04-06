@@ -31,15 +31,15 @@ for dir in $1/*/; do
   # Replace the .qdimacs extension with .prf
   renamedqdimacsfile="${base%_min.aag}.qdimacs"
   prffile="${base%_min.aag}.prf"
-  zkherbfile="${base%_min.aag}.zkherb"
+  zkskolemfile="${base%_min.aag}.zkskolem"
   verifierinput="${base%_min.aag}_verifier.qdimacs"
 
   # Full path for the proof file
   renamed_qdimacs="$dir$renamedqdimacsfile"
   prf_output="$dir$prffile"
-  zkherb_output="$dir$zkherbfile"
+  zkskolem_output="$dir$skolemfile"
   verifier_input="$dir$verifierinput"
 
   # Run ../depqbf with a 30-second timeout and save the output to the proof file
-  $2/./test 1 $3 $4 "$verifier_input" "$zkherb_output" "${prf_output}.unfold" > "${renamed_qdimacs%.qdimacs}_prover.result"
+  $2/./test 1 $3 $4 "$verifier_input" "$zkskolem_output" "${prf_output}.unfold" > "${renamed_qdimacs%.qdimacs}_prover.result"
 done

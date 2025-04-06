@@ -29,30 +29,32 @@ for dir in $1/*/; do
 
   # Replace the .qdimacs extension with .prf
   renamedqdimacsfile="${base%_min.aag}.qdimacs"
+  qmafile="${base%_min.aag}.qma"
   certfile="${base%_min.aag}.cert"
   cnffile="${base%_min.aag}.cnf"
   picoprffile="${base%_min.aag}.picoprf"
   mergedprffile="${base%_min.aag}.mergedprf"
   prffile="${base%_min.aag}.prf"
-  zkherbfile="${base%_min.aag}.zkherb"
+  zkskolemfile="${base%_min.aag}.zkskolem"
   verifierinput="${base%_min.aag}_verifier.qdimacs"
 
   # Full path for the proof file
   renamed_qdimacs="$dir$renamedqdimacsfile"
+  qma_output="$dir$qmafile"
   cert_output="$dir$certfile"
   cnf_output="$dir$cnffile"
   picoprf_output="$dir$picoprffile"
   mergedprf_output="$dir$mergedprffile"
   prf_output="$dir$prffile"
-  zkherb_output="$dir$zkherbfile"
+  zkskolem_output="$dir$zkskolemfile"
   verifier_input="$dir$verifierinput"
 
   # Run ../depqbf with a 30-second timeout and save the output to the proof file
   timeout 200 python3 caqe_true_preprocess.py "$file" "$renamed_qdimacs" > "$cert_output"
   max_var=$(python3 "$3/prover_backend/get_cert_maxvar.py" "$cert_output")
-  timeout 200 python3 "$3/prover_backend/qdimacsmatrix_to_aig_andlines.py" "$renamed_qdimacs" "$max_var" > "$renamed_qdimacs"
-  timeout 200 python3 "$3/prover_backend/combine_and_convert_aig_to_cnf.py" "$cert_output" "$renamed_qdimacs" "$max_var" > "$cnf_output"
-  timeout 30 python3 $3/verifier_backend/qdimacs_preprocess_for_zkherb_verification.py "$renamed_qdimacs" "$max_var" > "$verifier_input"
+  timeout 200 python3 "$3/prover_backend/qdimacsmatrix_to_aig_andlines.py" "$renamed_qdimacs" "$max_var" > "$qma_output"
+  timeout 200 python3 "$3/prover_backend/combine_and_convert_aig_to_cnf.py" "$cert_output" "$qma_output" > "$cnf_output"
+  timeout 200 python3 "$3/verifier_backend/combine_and_convert_aig_to_cnf.py" --zkskoval-input "$qma_output" > "$verifier_input"
   timeout 360 $2/./picosat -T "$picoprf_output" "$cnf_output" || true
   timeout 360 python3 $3/prover_backend/merge_cnf_and_picoprf.py "$cnf_output" "$picoprf_output" > "$mergedprf_output"
   rm -f "$picoprf_output"
@@ -60,5 +62,5 @@ for dir in $1/*/; do
   rm -f "$mergedprf_output"
   timeout 1000 python3 $3/prover_backend/unfold_proof.py "$prf_output"
   rm -f "$prf_output"
-  timeout 1000 python3 $3/prover_backend/herbrandaig_for_zk.py "$renamed_qdimacs" "$cert_output" > "$zkherb_output"
+  timeout 1000 python3 $3/prover_backend/skolemaig_for_zk.py "$renamed_qdimacs" "$cert_output" > "$zkskolem_output"
 done
