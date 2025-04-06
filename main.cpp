@@ -408,6 +408,7 @@ int main(int argc, char **argv) {
             error("dependency issue in skolem function (e_vars)");
     }
     skolem_vars_CR->check();
+    dependencies_ROZKRAM->check();
     auto skolem_timer_end = chrono::high_resolution_clock::now();
     auto cost_skolem = chrono::duration<double>(skolem_timer_end - skolem_timer_begin).count();
 
