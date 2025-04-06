@@ -37,7 +37,7 @@ for dir in $1/*/; do
   # Full path for the proof file
   renamed_qdimacs="$dir$renamedqdimacsfile"
   prf_output="$dir$prffile"
-  zkskolem_output="$dir$skolemfile"
+  zkskolem_output="$dir$zkskolemfile"
   verifier_input="$dir$verifierinput"
 
   # Run ../depqbf with a 30-second timeout and save the output to the proof file

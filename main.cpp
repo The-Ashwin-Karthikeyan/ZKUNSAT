@@ -341,11 +341,13 @@ int main(int argc, char **argv) {
                 vector <uint64_t> witness_for_neginp1_roots;
                 vector <uint64_t> witness_for_neginp2_roots;
                 vector <uint64_t> witness_for_out_roots;
+                vector <uint64_t> witness_for_third_roots;
                 if (party == ALICE) {
                     if (root_inp1[0] == root_inp2[0]) {
                         witness_for_out_roots.push_back(root_neginp1[0]);
                         witness_for_neginp1_roots.push_back(root_out[0]);
                         witness_for_neginp2_roots.push_back(root_out[0]);
+                        witness_for_third_roots.push_back(root_neginp1[0]);
                     }
                     else {
                         witness_for_out_roots.push_back(root_neginp1[0]);
@@ -359,13 +361,22 @@ int main(int argc, char **argv) {
                 padding(witness_for_neginp1_roots, 3);
                 padding(witness_for_neginp2_roots, 3);
                 padding(witness_for_out_roots, 3);
+                padding(witness_for_third_roots, 3);
                 clause witness_for_neginp1(witness_for_neginp1_roots, 3);
                 clause witness_for_neginp2(witness_for_neginp2_roots, 3);
                 clause witness_for_out(witness_for_out_roots, 3);
+                clause witness_for_third(witness_for_third_roots, 3);
                 third.poly.ProductEqual(witness_for_neginp1.poly, neginp1.poly); // Shows neginp1 is in third
                 third.poly.ProductEqual(witness_for_neginp2.poly, neginp2.poly); // Shows neginp2 is in third
                 third.poly.ProductEqual(witness_for_out.poly, out.poly); // Shows out is in third
-                // TODO: Check that third is in out.poly*neginp1.poly*neginp2.poly
+                // Check that third is in out.poly*neginp1.poly*neginp2.poly
+                vector <uint64_t> would_be_third_roots;
+                would_be_third_roots.push_back(root_out[0]);
+                would_be_third_roots.push_back(root_neginp1[0]);
+                would_be_third_roots.push_back(root_neginp2[0]);
+                padding(would_be_third_roots, 4);
+                clause would_be_third(would_be_third_roots, 4);
+                would_be_third.poly.ProductEqual(witness_for_third.poly, third.poly);
 
                 // Check the committed polynomials are consistent with the skolem file
                 clause inp1_skolem_var = skolem_vars_CR->get(Integer(INDEX_SZ, abs(dep_s[0]) - 1, ALICE));

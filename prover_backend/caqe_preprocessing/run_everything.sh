@@ -39,8 +39,8 @@ echo "All benchmark related files for the True instances shoulld be in the True 
 echo "---------------------------------------------------------------------------------------------"
 echo "Running zkskolem-validation as prover on the True instances..."
 echo "---------------------------------------------------------------------------------------------"
-./run_zkherbrand_as_prover.sh "$1/True" $2 $7 $8 &
+./run_zkskolem_as_prover.sh "$1/True" $2 $7 $8 &
 echo "---------------------------------------------------------------------------------------------"
 echo "Running zkskolem-validation as verifier on the True instances..."
 echo "---------------------------------------------------------------------------------------------"
-./run_zkherbrand_as_verifier.sh "$1/True" $2 $7 $8
+./run_zkskolem_as_verifier.sh "$1/True" $2 $7 $8
