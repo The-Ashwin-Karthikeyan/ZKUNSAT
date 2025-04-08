@@ -265,8 +265,10 @@ int main(int argc, char **argv) {
                 // Check that the dependencies listed in the skolem file are valid.
                 // i.e. dep(out) >= dep(in1) and dep(in2) 
                 Integer dependency_of_out_var = dependencies_ROZKRAM->read(ind);
-                Integer dependency_of_in1 = dependencies_ROZKRAM->read(Integer(INDEX_SZ, abs(dep_s[0])-1, ALICE));
-                Integer dependency_of_in2 = dependencies_ROZKRAM->read(Integer(INDEX_SZ, abs(dep_s[1])-1, ALICE));
+                Integer Index_of_in1 = Integer(INDEX_SZ, abs(dep_s[0])-1, ALICE);
+                Integer Index_of_in2 = Integer(INDEX_SZ, abs(dep_s[1])-1, ALICE);
+                Integer dependency_of_in1 = dependencies_ROZKRAM->read(Index_of_in1);
+                Integer dependency_of_in2 = dependencies_ROZKRAM->read(Index_of_in2);
                 if (!(dependency_of_out_var.geq(dependency_of_in1).reveal())) error ("dependency issue in skolem function (intermediate var)");
                 if (!(dependency_of_out_var.geq(dependency_of_in2).reveal())) error ("dependency issue in skolem function (intermediate var)");     
                 CLS out_raw = sko_vars[1 + num_ins + int(i/3)];
@@ -379,8 +381,8 @@ int main(int argc, char **argv) {
                 would_be_third.poly.ProductEqual(witness_for_third.poly, third.poly);
 
                 // Check the committed polynomials are consistent with the skolem file
-                clause inp1_skolem_var = skolem_vars_CR->get(Integer(INDEX_SZ, abs(dep_s[0]) - 1, ALICE));
-                clause inp2_skolem_var = skolem_vars_CR->get(Integer(INDEX_SZ, abs(dep_s[1]) - 1, ALICE));
+                clause inp1_skolem_var = skolem_vars_CR->get(Index_of_in1);
+                clause inp2_skolem_var = skolem_vars_CR->get(Index_of_in2);
                 inp1_skolem_var.poly.ProductEqual(inp1.poly, neginp1.poly);
                 inp2_skolem_var.poly.ProductEqual(inp2.poly, neginp2.poly);
                 out_skolem_var.poly.ProductEqual(out.poly, negout.poly);
