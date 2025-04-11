@@ -267,6 +267,8 @@ int main(int argc, char **argv) {
                 Integer dependency_of_out_var = dependencies_ROZKRAM->read(ind);
                 Integer Index_of_in1 = Integer(INDEX_SZ, abs(dep_s[0])-1, ALICE);
                 Integer Index_of_in2 = Integer(INDEX_SZ, abs(dep_s[1])-1, ALICE);
+                if (Index_of_in1.geq(ind).reveal()) error ("index issue in skolem function (intermediate var)");
+                if (Index_of_in2.geq(ind).reveal()) error ("index issue in skolem function (intermediate var)");
                 Integer dependency_of_in1 = dependencies_ROZKRAM->read(Index_of_in1);
                 Integer dependency_of_in2 = dependencies_ROZKRAM->read(Index_of_in2);
                 if (!(dependency_of_out_var.geq(dependency_of_in1).reveal())) error ("dependency issue in skolem function (intermediate var)");
