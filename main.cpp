@@ -54,26 +54,37 @@ int main(int argc, char **argv) {
     vector <CLS> clauses;
     vector <SPT> supports;
     vector <SPT> pivots;
+    vector <uint16_t> inline_supports_index;
+    vector <SPT> inline_supports;
+    vector <PVT> inline_pivots;
 
 
     if (party == ALICE) {
-        readproof(string(prooffile), DEGREE, clauses, supports, pivots, ncls, nres);
+        readproof(string(prooffile), DEGREE, clauses, supports, pivots, inline_supports_index, inline_supports, inline_pivots, ncls, nres);
         cout << string(prooffile) << endl;
         cout << "----input proof----" << endl;
         io->send_data(&nres, 4);
         io->send_data(&ncls, 4);
         io->send_data(&DEGREE, 4);
-
+        for(uint16_t idx: inline_supports_index)
+            io->send_data(&idx, 2);
     }
 
     if (party == BOB) {
         io->recv_data(&nres, 4);
         io->recv_data(&ncls, 4);
         io->recv_data(&DEGREE, 4);
+        for (int i = 0; i < nres; i++) {
+            uint16_t idx = 0;
+            io->recv_data(&idx, 2);
+            inline_supports_index.push_back(idx);
+        }
 
         clauses = vector<CLS>(ncls);
         supports = vector<SPT>(ncls);
         pivots = vector < vector < int64_t >> (ncls);
+        inline_supports = vector<SPT>(nres);
+        inline_pivots = vector<PVT>(nres);
     }
 
     cout << "nres " << nres << endl;
@@ -161,7 +172,6 @@ int main(int argc, char **argv) {
         SPT s = supports[i];
         PVT p = pivots[i];
 
-
         if (party == BOB) {
             for (int j = s.size(); j < chain_length; j++) {
                 s.push_back(0L);
@@ -169,21 +179,75 @@ int main(int argc, char **argv) {
             for (int j = p.size(); j < chain_length - 1; j++) {
                 p.push_back(0L);
             }
+            if (inline_supports_index[i - (ncls - nres)] != 0xFFFF) {
+                p.push_back(0L);
+            }
         }
 
+        if (inline_supports_index[i - (ncls - nres)] == 0xFFFF) {
+            assert(s.size() == p.size() +1);
+        } else {
+            assert(s.size() == p.size());
+        }
 
-        assert(s.size() == p.size() +1);
         for (uint64_t index: s) {
             chain.push_back(Integer(INDEX_SZ, index, ALICE));
         }
-
+        
+        SPT inline_s = inline_supports[i - (ncls - nres)];
+        PVT inline_p = inline_pivots[i - (ncls - nres)];
+        uint64_t inline_s_size = inline_s.size();
+        
+        if (party == ALICE) {
+            if (inline_supports_index[i - (ncls - nres)] != 0xFFFF) {
+                inline_s_size = inline_s.size();
+                io->send_data(&inline_s_size, 8);
+            }
+        } else {
+            if (inline_supports_index[i - (ncls - nres)] != 0xFFFF) {
+                io->recv_data(&inline_s_size, 8);
+            }
+        }
+        
+        
+        if (party == BOB) {
+            if (inline_supports_index[i - (ncls - nres)] != 0xFFFF) {
+                for (int j = inline_s.size(); j < inline_s_size; j++) {
+                    inline_s.push_back(0L);
+                }
+                for (int j = inline_p.size(); j < inline_s_size - 1; j++) {
+                    inline_p.push_back(0L);
+                }
+            }
+        }
+        if (inline_supports_index[i - (ncls - nres)] != 0xFFFF) {
+            assert(inline_s.size() == inline_p.size() + 1);
+        }
+        vector<Integer> inlined_chain;
+        vector<uint64_t> inlined_pvt;
+        if (inline_supports_index[i - (ncls - nres)] != 0xFFFF) {
+            for (uint64_t index: inline_s) {
+                inlined_chain.push_back(Integer(INDEX_SZ, index, ALICE));
+            }
+            inlined_pvt.push_back(0UL);
+            for (uint64_t pp: inline_p) {
+                inlined_pvt.push_back(pp);
+            }
+        }
+        clause inlined_clause;
+        if (!inlined_chain.empty()) {
+            auto cost = check_inline(inlined_chain, inlined_pvt, i, formula);
+            inlined_clause = cost.first;
+            cost_resolve = cost_resolve + cost.second.second;
+            cost_access = cost_access + cost.second.first;
+        }
         pvt.push_back(0UL);
         for(uint64_t pp: p){
             pvt.push_back(pp);
         }
 
         bool last_clause = (i == (ncls - 1));
-        auto cost = check_chain(chain, pvt, i, formula, last_clause);
+        auto cost = check_chain(chain, pvt, i, formula, last_clause, inlined_clause, inline_supports_index[i - (ncls - nres)]);
         cost_resolve = cost_resolve + cost.second;
         cost_access = cost_access + cost.first;
     }

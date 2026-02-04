@@ -337,15 +337,30 @@ public:
     }
 };
 
-inline pair<double, double> check_chain(vector<Integer>& indice, vector<uint64_t> pivots, int ptr, clauseRAM<BoolIO<NetIO>>* formula, bool last_clause){
+inline pair<double, double> check_chain(vector<Integer>& indice, vector<uint64_t> pivots, int ptr, clauseRAM<BoolIO<NetIO>>* formula, bool last_clause, clause& inlined_clause, uint16_t inline_support_index){
     double cost_resolve = 0;
     double cost_access = 0;
+    bool inlined = false;
     auto timer_0 = chrono::high_resolution_clock::now();
     vector<clause> intermediate;
     vector<clause> resource;
-    for (Integer index : indice){
-        if (index.geq(Integer(INDEX_SZ, ptr, PUBLIC)).reveal())  error("cheat!");
-        resource.push_back(formula->get(index));
+    for (int i = 0; i < indice.size() + 1; i++){
+        if (i == inline_support_index){
+            resource.push_back(inlined_clause);
+            inlined = true;
+            continue;
+        }
+        if (inlined) {
+            if (indice[i - 1].geq(Integer(INDEX_SZ, ptr, PUBLIC)).reveal())  error("cheat!");
+            resource.push_back(formula->get(indice[i - 1]));
+        }
+        else {
+            if (indice[i].geq(Integer(INDEX_SZ, ptr, PUBLIC)).reveal())  error("cheat!");
+            resource.push_back(formula->get(indice[i]));
+            if (i == indice.size() -1 && inline_support_index == 0xFFFF) {
+                break;
+            }
+        }
     }
 
     auto timer_1 = chrono::high_resolution_clock::now();
@@ -389,6 +404,51 @@ inline pair<double, double> check_chain(vector<Integer>& indice, vector<uint64_t
     cost_resolve = chrono::duration<double>(timer_3 - timer_2).count();
     return pair<double, double>{cost_access, cost_resolve};
 
+}
+
+inline pair<clause, pair<double, double>> check_inline(vector<Integer>& indice, vector<uint64_t> pivots,  int ptr, clauseRAM<BoolIO<NetIO>>* formula){
+    double cost_access = 0;
+    double cost_resolve = 0;
+    auto timer_0 = chrono::high_resolution_clock::now();
+    vector<clause> intermediate;
+    vector<clause> resource;
+    for (Integer index : indice){
+        if (index.geq(Integer(INDEX_SZ, ptr, PUBLIC)).reveal())  error("cheat!");
+        resource.push_back(formula->get(index));
+    }
+
+    auto timer_1 = chrono::high_resolution_clock::now();
+
+    cost_access = chrono::duration<double>(timer_1 - timer_0).count();
+    
+    auto timer_2 = chrono::high_resolution_clock::now();
+
+    intermediate.push_back(resource[0]);
+
+    for (int i = 1; i < pivots.size(); i++){
+
+        clause a = intermediate[i-1];
+
+        clause b = resource[i];
+
+        clause tmp = get_res_f2k(a, b, pivots[i]);
+
+        intermediate.push_back(tmp);
+
+    }
+    for (int i = 1; i < pivots.size(); i++){
+
+        clause c0 = intermediate[i-1];
+
+        clause c1 = resource[i];
+
+        check_xres(c0, c1, intermediate[i], pivots[i]);
+
+    }
+    auto timer_3 = chrono::high_resolution_clock::now();
+    cost_resolve = chrono::duration<double>(timer_3 - timer_2).count();
+    pair<double, double> cost_overall = {cost_access, cost_resolve};
+    return pair<clause, pair<double, double>>{intermediate[intermediate.size()-1], cost_overall};
 }
 
 /**************************checking*************************************************/

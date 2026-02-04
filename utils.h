@@ -303,7 +303,7 @@ typedef  vector<int64_t> CLS;
 typedef vector<int64_t> SPT;
 typedef vector<int64_t> PVT;
 
-inline void readproof(string filename, int& d, vector<CLS>& clauses, vector<SPT>& supports, vector<PVT>& pivots, int& ncls, int& nres){
+inline void readproof(string filename, int& d, vector<CLS>& clauses, vector<SPT>& supports, vector<PVT>& pivots, vector<uint16_t>& inline_supports_index, vector<SPT>& inline_supports, vector<PVT>& inline_pivots, int& ncls, int& nres){
     std::ifstream file(filename);
     std::string str;
     ncls = 0;
@@ -330,13 +330,54 @@ inline void readproof(string filename, int& d, vector<CLS>& clauses, vector<SPT>
             }
             if (word == "support:") {
                 SPT support;
+                SPT isupport;
+                PVT ipivot;
                 ss >> word;
-                while (word != "pivot:") {
+                uint16_t curr_index = 0;
+                bool has_support = false;
+                while (word != "pivot:" && word != "(") {
                     int i = stoi(word);
                     support.push_back(i);
+                    curr_index = curr_index + 1;
+                    has_support = true;
                     ss >> word;
                 }
+                if (word == "("){
+                    has_support = true;
+                    inline_supports_index.push_back(curr_index);
+                    curr_index += 1;
+                    ss >> word;
+                    assert(word == "support:");
+                    ss >> word;
+                    while (word != "pivot:") {
+                        int i = stoi(word);
+                        isupport.push_back(i);
+                        ss >> word;
+                    }
+                    if (word == "pivot:"){
+                        ss >> word;
+                        while (word != ")") {
+                            int i = stoi(word);
+                            ipivot.push_back(wrap(i));
+                            ss >> word;
+                        }
+                    }
+                    ss >> word;
+                    while (word != "pivot:") {
+                        curr_index += 1;
+                        int i = stoi(word);
+                        support.push_back(i);
+                        ss >> word;
+                    }
+                }
+                else if (has_support) {
+                    inline_supports_index.push_back(0xFFFF);
+                }
                 supports.push_back(support);
+                if (has_support){
+                    inline_supports.push_back(isupport);
+                    inline_pivots.push_back(ipivot);
+                }
             }
             if (word == "pivot:") {
                 SPT pchain;
